@@ -16,7 +16,7 @@ function Signup() {
             const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/register`, formData);
             localStorage.setItem('token', res.data.token);
             alert(res.data.msg);
-            navigate('/protected');
+            navigate('/profile');
         } catch (err) {
             alert(err.response.data.msg);
         }

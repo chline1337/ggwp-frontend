@@ -16,7 +16,7 @@ function Login() {
             const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/login`, formData);
             localStorage.setItem('token', res.data.token);
             alert(res.data.msg);
-            navigate('/protected'); // Redirect to a protected page
+            navigate('/profile');
         } catch (err) {
             alert(err.response.data.msg);
         }

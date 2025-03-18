@@ -3,6 +3,9 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Signup from './components/Signup';
 import Login from './components/Login';
 import Protected from './components/Protected';
+import Profile from './components/Profile';
+import TeamCreate from './components/TeamCreate';
+import Teams from './components/Teams';
 import './App.css';
 
 function App() {
@@ -15,6 +18,9 @@ function App() {
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/protected" element={<Protected />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/team-create" element={<TeamCreate />} />
+                    <Route path="/teams" element={<Teams />} />
                 </Routes>
             </div>
         </Router>
