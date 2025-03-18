@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 function Login() {
     const [formData, setFormData] = useState({ username: '', password: '' });
+    const navigate = useNavigate();
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -12,8 +14,9 @@ function Login() {
         e.preventDefault();
         try {
             const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/login`, formData);
+            localStorage.setItem('token', res.data.token);
             alert(res.data.msg);
-            localStorage.setItem('user', JSON.stringify(res.data.user));
+            navigate('/protected'); // Redirect to a protected page
         } catch (err) {
             alert(err.response.data.msg);
         }
