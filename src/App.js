@@ -6,6 +6,8 @@ import Protected from './components/Protected';
 import Profile from './components/Profile';
 import TeamCreate from './components/TeamCreate';
 import Teams from './components/Teams';
+import TournamentCreate from './components/TournamentCreate';
+import Tournaments from './components/Tournaments';
 import './App.css';
 
 function App() {
@@ -21,6 +23,8 @@ function App() {
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/team-create" element={<TeamCreate />} />
                     <Route path="/teams" element={<Teams />} />
+                    <Route path="/tournament-create" element={<TournamentCreate />} />
+                    <Route path="/tournaments" element={<Tournaments />} />
                 </Routes>
             </div>
         </Router>
