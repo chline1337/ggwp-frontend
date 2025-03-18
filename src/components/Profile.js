@@ -98,7 +98,7 @@ function Profile() {
                 />
                 <button type="submit">Add Game Account</button>
             </form>
-            <button onClick={() => { localStorage.removeItem('token'); navigate('/login'); }}>Logout</button>
+            <button onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('userId'); navigate('/login'); }}>Logout</button>
             <button onClick={() => navigate('/teams')}>My Teams</button>
 
         </div>

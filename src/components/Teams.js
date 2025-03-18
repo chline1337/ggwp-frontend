@@ -35,12 +35,12 @@ function Teams() {
         e.preventDefault();
         const token = localStorage.getItem('token');
         try {
-            await axios.post(`${process.env.REACT_APP_API_URL}/api/team/invite`, inviteForm, {
+            const payload = { teamId: e.target.elements.teamId.value, username: inviteForm.username };
+            await axios.post(`${process.env.REACT_APP_API_URL}/api/team/invite`, payload, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             alert('Invitation sent');
             setInviteForm({ teamId: '', username: '' });
-            // Refresh teams
             const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/team/my-teams`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -68,11 +68,30 @@ function Teams() {
         }
     };
 
+    const deleteTeam = async (teamId) => {
+        const token = localStorage.getItem('token');
+        if (window.confirm('Are you sure you want to delete this team?')) {
+            try {
+                await axios.delete(`${process.env.REACT_APP_API_URL}/api/team/${teamId}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                alert('Team deleted successfully');
+                const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/team/my-teams`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                setTeams(res.data);
+            } catch (err) {
+                alert(err.response.data.msg);
+            }
+        }
+    };
+
+    const currentUserId = localStorage.getItem('userId');
+
     return (
         <div>
             <h2>My Teams</h2>
             <button onClick={() => navigate('/team-create')}>Create New Team</button>
-            <button onClick={() => navigate('/profile')}>Profile</button>
             {teams.map((team) => (
                 <div key={team._id}>
                     <h3>{team.name}</h3>
@@ -84,18 +103,21 @@ function Teams() {
                             <li key={index}>{member.user.username} ({member.role})</li>
                         ))}
                     </ul>
-                    {team.captain._id === localStorage.getItem('userId') && (
-                        <form onSubmit={sendInvite}>
-                            <input
-                                type="text"
-                                name="username"
-                                placeholder="Invite Username"
-                                value={inviteForm.username}
-                                onChange={handleInviteChange}
-                            />
-                            <input type="hidden" name="teamId" value={team._id} />
-                            <button type="submit">Invite</button>
-                        </form>
+                    {team.captain._id.toString() === currentUserId && (
+                        <>
+                            <form onSubmit={sendInvite}>
+                                <input
+                                    type="text"
+                                    name="username"
+                                    placeholder="Invite Username"
+                                    value={inviteForm.username}
+                                    onChange={handleInviteChange}
+                                />
+                                <input type="hidden" name="teamId" value={team._id} />
+                                <button type="submit">Invite</button>
+                            </form>
+                            <button onClick={() => deleteTeam(team._id)}>Delete Team</button>
+                        </>
                     )}
                     <h4>Pending Invitations</h4>
                     <ul>

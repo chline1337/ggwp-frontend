@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode'; // Changed from import jwtDecode
 
 function Signup() {
     const [formData, setFormData] = useState({ username: '', email: '', password: '' });
@@ -14,7 +15,10 @@ function Signup() {
         e.preventDefault();
         try {
             const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/register`, formData);
-            localStorage.setItem('token', res.data.token);
+            const token = res.data.token;
+            localStorage.setItem('token', token);
+            const decoded = jwtDecode(token); // No change here
+            localStorage.setItem('userId', decoded.userId);
             alert(res.data.msg);
             navigate('/profile');
         } catch (err) {
