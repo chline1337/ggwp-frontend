@@ -8,7 +8,8 @@ import Profile from './components/Profile';
 import TeamCreate from './components/TeamCreate';
 import Teams from './components/Teams';
 import TournamentCreate from './components/TournamentCreate';
-import Tournaments from './components/Tournaments';
+import TournamentList from './components/TournamentList';
+import TournamentDetail from './components/TournamentDetail';
 import './App.css';
 import './styles.css';
 
@@ -16,10 +17,9 @@ function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     useEffect(() => {
-        // Check if token exists in localStorage to determine login status
         const token = localStorage.getItem('token');
-        setIsLoggedIn(!!token); // !! converts to boolean (true if token exists)
-    }, []); // Runs once on mount
+        setIsLoggedIn(!!token);
+    }, []);
 
     return (
         <Router>
@@ -46,7 +46,8 @@ function App() {
                         <Route path="/team-create" element={<TeamCreate />} />
                         <Route path="/teams" element={<Teams />} />
                         <Route path="/tournament-create" element={<TournamentCreate />} />
-                        <Route path="/tournaments" element={<Tournaments />} />
+                        <Route path="/tournaments" element={<TournamentList />} />
+                        <Route path="/tournaments/:id" element={<TournamentDetail />} />
                     </Routes>
                 </div>
             </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import './Teams.css';
+import './TeamCreate.css';
 
 function TeamCreate() {
     const [formData, setFormData] = useState({ name: '', description: '' });
@@ -26,11 +26,28 @@ function TeamCreate() {
     };
 
     return (
-        <div>
-            <h2>Create Team</h2>
-            <form onSubmit={handleSubmit}>
-                <input type="text" name="name" placeholder="Team Name" onChange={handleChange} required />
-                <input type="text" name="description" placeholder="Description" onChange={handleChange} />
+        <div className="team-create-container">
+            <form className="team-create-form" onSubmit={handleSubmit}>
+                <h2>Create Team</h2>
+                <div className="form-input-group">
+                    <input
+                        type="text"
+                        name="name"
+                        placeholder="Team Name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        required
+                    />
+                </div>
+                <div className="form-input-group">
+                    <input
+                        type="text"
+                        name="description"
+                        placeholder="Description"
+                        value={formData.description}
+                        onChange={handleChange}
+                    />
+                </div>
                 <button type="submit">Create</button>
             </form>
         </div>

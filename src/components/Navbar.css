@@ -6,10 +6,12 @@
     z-index: 1000;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     display: grid;
-    grid-template-columns: auto 1fr auto; /* Logo, links, logout */
+    grid-template-columns: auto 1fr auto;
     align-items: center;
     transition: background-color 0.3s ease;
+    height: 60px; /* Fixed height for consistency */
 }
+    /* Rest unchanged */
 
     .navbar:hover {
         background: #1A1A1A; /* Slight lighten on hover */

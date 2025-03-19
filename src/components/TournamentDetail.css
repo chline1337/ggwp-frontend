@@ -1,28 +1,29 @@
-.tournaments-container {
-    min-height: 100vh;
-    padding-top: 80px; /* Space for sticky navbar */
+.tournament-detail-container {
+    padding-top: 20px;
     padding-bottom: 20px;
 }
+/* Rest unchanged */
 
 .tournament-card {
     background: var(--card-background);
-    padding: 25px;
+    padding: 30px;
     border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-    margin-bottom: 20px;
+    max-width: 800px;
+    margin: 0 auto 20px;
     transition: transform 0.3s ease;
 }
 
     .tournament-card:hover {
-        transform: translateY(-5px); /* Subtle lift on hover */
+        transform: translateY(-5px);
     }
 
     .tournament-card h3 {
-        font-size: 24px;
+        font-size: 28px;
         font-weight: 900;
         color: var(--primary-color);
-        margin-bottom: 15px;
-        letter-spacing: 0.5px;
+        margin-bottom: 20px;
+        letter-spacing: 1px;
     }
 
     .tournament-card p {
@@ -33,10 +34,10 @@
 
 .participants-list h4,
 .bracket h4 {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 700;
     color: var(--secondary-color);
-    margin: 15px 0 10px;
+    margin: 20px 0 10px;
 }
 
 .participants-list ul {
@@ -44,7 +45,7 @@
     padding: 0;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 10px;
+    gap: 15px;
 }
 
 .participants-list li {
@@ -57,7 +58,7 @@
 .bracket {
     display: flex;
     flex-wrap: wrap;
-    gap: 20px;
+    gap: 25px;
     margin-top: 20px;
 }
 
@@ -113,7 +114,7 @@
 .signup-form {
     display: flex;
     gap: 15px;
-    margin-top: 15px;
+    margin-top: 20px;
 }
 
     .signup-form input {
@@ -147,14 +148,14 @@
     .actions,
     .signup-form button,
     .tournament-card > button {
-        margin-top: 10px;
+        margin-top: 15px;
     }
 
         .actions button,
         .signup-form button,
         .tournament-card > button {
             background: var(--gradient);
-            padding: 10px 20px;
+            padding: 12px 20px;
             border: none;
             border-radius: 25px;
             color: var(--text-color);
@@ -170,27 +171,6 @@
                 background: linear-gradient(135deg, #FF6F00, #FFA500);
                 transform: scale(1.02);
             }
-
-.create-tournament-btn {
-    display: block;
-    width: 200px;
-    margin: 0 auto 20px;
-    background: var(--secondary-color);
-    padding: 12px;
-    border: none;
-    border-radius: 25px;
-    color: var(--text-color);
-    font-size: 18px;
-    font-weight: 700;
-    text-align: center;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-    .create-tournament-btn:hover {
-        background: #0D8CE0;
-        transform: scale(1.02);
-    }
 
 @media (max-width: 768px) {
     .tournament-card {
@@ -212,21 +192,16 @@
 
 @media (max-width: 480px) {
     .tournament-card h3 {
-        font-size: 20px;
+        font-size: 24px;
     }
 
     .participants-list h4,
     .bracket h4 {
-        font-size: 18px;
+        font-size: 20px;
     }
 
     .participants-list li,
     .match {
         font-size: 14px;
-    }
-
-    .create-tournament-btn {
-        width: 100%;
-        font-size: 16px;
     }
 }

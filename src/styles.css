@@ -1,12 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap');
 
 :root {
-    --primary-color: #FF5500; /* Faceit orange */
-    --secondary-color: #1DA1F2; /* Twitter blue */
-    --background-color: #121212; /* Darker modern bg */
-    --text-color: #E0E0E0; /* Softer white */
-    --card-background: #1E1E1E; /* Modern card bg */
-    --border-color: #333333; /* Subtle borders */
+    --primary-color: #FF5500;
+    --secondary-color: #1DA1F2;
+    --background-color: #121212;
+    --text-color: #E0E0E0;
+    --card-background: #1E1E1E;
+    --border-color: #333333;
     --shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     --gradient: linear-gradient(135deg, #FF5500, #FF8C00);
 }
@@ -17,11 +17,18 @@
     padding: 0;
 }
 
+html {
+    scroll-behavior: smooth; /* Smooth scrolling */
+}
+
 body {
     background-color: var(--background-color);
     color: var(--text-color);
     font-family: 'Roboto', sans-serif;
     line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden; /* Prevent horizontal overflow */
 }
 
 a {
@@ -42,11 +49,11 @@ button {
         transform: translateY(-2px);
     }
 
-/* Responsive container */
 .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+    min-height: calc(100vh - 60px); /* Adjust for navbar height */
 }
 
 @media (max-width: 768px) {

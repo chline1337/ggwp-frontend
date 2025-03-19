@@ -1,24 +1,25 @@
-.form-container {
+.team-create-container {
+    min-height: 100vh;
     display: grid;
     place-items: center;
-    padding: 20px 0; /* Simplified padding */
+    padding: 20px;
 }
 
-.form {
+.team-create-form {
     background: var(--card-background);
     padding: 40px 30px;
     border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
     width: 100%;
-    max-width: 360px;
+    max-width: 400px; /* Slimmer, modern width */
     transition: transform 0.3s ease;
 }
 
-    .form:hover {
-        transform: translateY(-5px);
+    .team-create-form:hover {
+        transform: translateY(-5px); /* Subtle lift on hover */
     }
 
-    .form h2 {
+    .team-create-form h2 {
         text-align: center;
         font-size: 32px;
         font-weight: 900;
@@ -32,7 +33,7 @@
     margin-bottom: 25px;
 }
 
-.form input {
+.team-create-form input {
     width: 100%;
     padding: 12px 0;
     border: none;
@@ -45,31 +46,25 @@
     transition: border-color 0.3s ease;
 }
 
-    .form input:focus {
-        border-color: var(--secondary-color);
+    .team-create-form input:focus {
+        border-color: var(--secondary-color); /* Twitter blue on focus */
     }
 
-    .form input::placeholder {
+    .team-create-form input::placeholder {
         color: #888;
         font-size: 16px;
         transition: transform 0.3s ease, font-size 0.3s ease, color 0.3s ease;
     }
 
-    .form input:focus::placeholder {
+    .team-create-form input:focus::placeholder {
         transform: translateY(-20px);
         font-size: 12px;
         color: var(--secondary-color);
     }
 
-.form-buttons {
-    display: flex;
-    gap: 15px;
-    margin-top: 20px;
-}
-
-.form button {
-    flex: 1;
-    padding: 12px;
+.team-create-form button {
+    width: 100%;
+    padding: 14px;
     background: var(--secondary-color);
     color: var(--text-color);
     border: none;
@@ -81,40 +76,31 @@
     transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-    .form button:hover {
+    .team-create-form button:hover {
         background: #0D8CE0;
         transform: scale(1.02);
     }
 
-    .form button.signup {
-        background: var(--primary-color); /* Orange for Sign Up */
-    }
-
-        .form button.signup:hover {
-            background: #FF6F00;
-        }
-
 @media (max-width: 480px) {
-    .form {
+    .team-create-form {
         padding: 20px;
         max-width: 90%;
     }
 
-        .form h2 {
+        .team-create-form h2 {
             font-size: 28px;
         }
 
-        .form input {
+        .team-create-form input {
             font-size: 16px;
         }
 
-    .form-buttons {
-        flex-direction: column;
-        gap: 10px;
-    }
+        .team-create-form button {
+            font-size: 16px;
+            padding: 12px;
+        }
 
-    .form button {
-        font-size: 16px;
-        padding: 10px;
+    .form-input-group {
+        margin-bottom: 20px;
     }
 }

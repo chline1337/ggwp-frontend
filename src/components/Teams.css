@@ -1,6 +1,5 @@
 .teams-container {
-    min-height: 100vh;
-    padding-top: 80px; /* Space for sticky navbar */
+    padding-top: 20px; /* Reduced from 80px, handled by .container */
     padding-bottom: 20px;
 }
 

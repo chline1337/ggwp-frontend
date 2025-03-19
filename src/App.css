@@ -1,15 +1,13 @@
 .app-container {
     background: var(--background-color);
-    min-height: 100vh;
 }
 
 .home-container {
-    min-height: calc(100vh - 60px); /* Adjust for navbar height */
     display: grid;
     place-items: center;
-    padding: 20px;
-    text-align: center;
+    padding: 20px 0;
 }
+    /* Rest unchanged */
 
     .home-container h1 {
         font-size: 48px;

@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import './Tournaments.css';
+import './TournamentCreate.css';
+
 function TournamentCreate() {
     const [formData, setFormData] = useState({
-        name: '', game: '', format: 'single_elimination', participantType: 'user',
-        maxParticipants: '', groups: '', groupSize: '',
+        name: '',
+        game: '',
+        format: 'single_elimination',
+        participantType: 'user',
+        maxParticipants: '',
+        groups: '',
+        groupSize: '',
     });
     const navigate = useNavigate();
 
@@ -28,26 +34,75 @@ function TournamentCreate() {
     };
 
     return (
-        <div>
-            <h2>Create Tournament</h2>
-            <form onSubmit={handleSubmit}>
-                <input type="text" name="name" placeholder="Tournament Name" onChange={handleChange} required />
-                <input type="text" name="game" placeholder="Game" onChange={handleChange} required />
-                <select name="format" onChange={handleChange}>
-                    <option value="single_elimination">Single Elimination</option>
-                    <option value="group_stage">Group Stage</option>
-                </select>
-                <select name="participantType" onChange={handleChange}>
-                    <option value="user">Individual</option>
-                    <option value="team">Team</option>
-                </select>
+        <div className="tournament-create-container">
+            <form className="tournament-create-form" onSubmit={handleSubmit}>
+                <h2>Create Tournament</h2>
+                <div className="form-input-group">
+                    <input
+                        type="text"
+                        name="name"
+                        placeholder="Tournament Name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        required
+                    />
+                </div>
+                <div className="form-input-group">
+                    <input
+                        type="text"
+                        name="game"
+                        placeholder="Game"
+                        value={formData.game}
+                        onChange={handleChange}
+                        required
+                    />
+                </div>
+                <div className="form-input-group">
+                    <select name="format" value={formData.format} onChange={handleChange}>
+                        <option value="single_elimination">Single Elimination</option>
+                        <option value="group_stage">Group Stage</option>
+                    </select>
+                </div>
+                <div className="form-input-group">
+                    <select name="participantType" value={formData.participantType} onChange={handleChange}>
+                        <option value="user">Individual</option>
+                        <option value="team">Team</option>
+                    </select>
+                </div>
                 {formData.format === 'single_elimination' && (
-                    <input type="number" name="maxParticipants" placeholder="Max Participants" onChange={handleChange} required />
+                    <div className="form-input-group">
+                        <input
+                            type="number"
+                            name="maxParticipants"
+                            placeholder="Max Participants"
+                            value={formData.maxParticipants}
+                            onChange={handleChange}
+                            required
+                        />
+                    </div>
                 )}
                 {formData.format === 'group_stage' && (
                     <>
-                        <input type="number" name="groups" placeholder="Number of Groups" onChange={handleChange} required />
-                        <input type="number" name="groupSize" placeholder="Group Size" onChange={handleChange} required />
+                        <div className="form-input-group">
+                            <input
+                                type="number"
+                                name="groups"
+                                placeholder="Number of Groups"
+                                value={formData.groups}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+                        <div className="form-input-group">
+                            <input
+                                type="number"
+                                name="groupSize"
+                                placeholder="Group Size"
+                                value={formData.groupSize}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
                     </>
                 )}
                 <button type="submit">Create</button>
