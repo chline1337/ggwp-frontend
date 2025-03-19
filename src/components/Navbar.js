@@ -29,8 +29,7 @@ function Navbar() {
                 <li><Link to="/tournaments">Tournaments</Link></li>
                 <li><Link to="/teams">Teams</Link></li>
                 <li><Link to="/profile">Profile</Link></li>
-                <li><Link to="/login">Login</Link></li>
-                {/* Removed Signup link as per your request */}
+
             </ul>
             <div className={`navbar-logout ${isOpen ? 'active' : ''}`}>
                 {isLoggedIn && (

@@ -1,9 +1,14 @@
-.home-container {
+.app-container {
+    background: var(--background-color);
     min-height: 100vh;
+}
+
+.home-container {
+    min-height: calc(100vh - 60px); /* Adjust for navbar height */
     display: grid;
     place-items: center;
+    padding: 20px;
     text-align: center;
-    padding-top: 80px;
 }
 
     .home-container h1 {
@@ -12,38 +17,87 @@
         background: var(--gradient);
         -webkit-background-clip: text;
         color: transparent;
+        margin-bottom: 20px;
+        letter-spacing: 1px;
+        animation: fadeIn 1s ease-in-out;
     }
 
     .home-container p {
         font-size: 20px;
-        margin-top: 20px;
+        color: #bbb;
+        margin-bottom: 30px;
     }
 
-    .home-container a {
+.home-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+    .home-buttons a {
+        display: inline-block;
+        padding: 14px 30px;
+        background: var(--secondary-color);
+        color: var(--text-color);
+        border-radius: 25px;
         font-size: 18px;
         font-weight: 700;
-        padding: 10px 20px;
-        background: var(--secondary-color);
-        border-radius: 8px;
-        margin: 0 10px;
-        display: inline-block;
+        letter-spacing: 0.5px;
+        text-decoration: none;
+        transition: background-color 0.3s ease, transform 0.2s ease;
     }
 
-        .home-container a:hover {
+        .home-buttons a:hover {
             background: #0D8CE0;
+            transform: scale(1.02);
         }
+
+        .home-buttons a.signup {
+            background: var(--primary-color);
+        }
+
+            .home-buttons a.signup:hover {
+                background: #FF6F00;
+            }
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .home-container h1 {
+        font-size: 36px;
+    }
+
+    .home-container p {
+        font-size: 18px;
+    }
+
+    .home-buttons {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
 
 @media (max-width: 480px) {
     .home-container h1 {
-        font-size: 32px;
+        font-size: 28px;
     }
 
     .home-container p {
         font-size: 16px;
     }
 
-    .home-container a {
-        display: block;
-        margin: 10px 0;
+    .home-buttons a {
+        font-size: 16px;
+        padding: 12px 20px;
     }
 }
