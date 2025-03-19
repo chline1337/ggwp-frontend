@@ -1,0 +1,199 @@
+.teams-container {
+    min-height: 100vh;
+    padding-top: 80px; /* Space for sticky navbar */
+    padding-bottom: 20px;
+}
+
+.team-card {
+    background: var(--card-background);
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    margin-bottom: 20px;
+    transition: transform 0.3s ease;
+}
+
+    .team-card:hover {
+        transform: translateY(-5px); /* Subtle lift on hover */
+    }
+
+    .team-card h3 {
+        font-size: 24px;
+        font-weight: 900;
+        color: var(--primary-color);
+        margin-bottom: 15px;
+        letter-spacing: 0.5px;
+    }
+
+    .team-card p {
+        font-size: 16px;
+        color: #bbb;
+        margin: 10px 0;
+    }
+
+.team-members h4,
+.team-invitations h4 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--secondary-color);
+    margin: 15px 0 10px;
+}
+
+.team-members ul,
+.team-invitations ul {
+    list-style: none;
+    padding: 0;
+}
+
+.team-members li,
+.team-invitations li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: #2A2A2A;
+    border-radius: 8px;
+    margin: 10px 0;
+    font-size: 16px;
+}
+
+    .team-invitations li button {
+        background: var(--secondary-color);
+        padding: 6px 15px;
+        border: none;
+        border-radius: 25px;
+        color: var(--text-color);
+        font-size: 14px;
+        font-weight: 700;
+        margin-left: 10px;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+        .team-invitations li button:hover {
+            background: #0D8CE0;
+            transform: scale(1.05);
+        }
+
+        .team-invitations li button:nth-child(2) {
+            background: #dc3545; /* Red for Decline */
+        }
+
+            .team-invitations li button:nth-child(2):hover {
+                background: #c82333;
+            }
+
+.invite-form {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+    .invite-form input {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-bottom: 2px solid var(--border-color);
+        background: transparent;
+        color: var(--text-color);
+        font-size: 16px;
+        outline: none;
+        transition: border-color 0.3s ease;
+    }
+
+        .invite-form input:focus {
+            border-color: var(--secondary-color);
+        }
+
+        .invite-form input::placeholder {
+            color: #888;
+            font-size: 14px;
+            transition: transform 0.3s ease, font-size 0.3s ease, color 0.3s ease;
+        }
+
+        .invite-form input:focus::placeholder {
+            transform: translateY(-20px);
+            font-size: 12px;
+            color: var(--secondary-color);
+        }
+
+    .invite-form button,
+    .team-card > button {
+        background: var(--gradient);
+        padding: 12px 20px;
+        border: none;
+        border-radius: 25px;
+        color: var(--text-color);
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+        .invite-form button:hover,
+        .team-card > button:hover {
+            background: linear-gradient(135deg, #FF6F00, #FFA500);
+            transform: scale(1.02);
+        }
+
+.create-team-btn {
+    display: block;
+    width: 200px;
+    margin: 0 auto 20px;
+    background: var(--secondary-color);
+    padding: 12px;
+    border: none;
+    border-radius: 25px;
+    color: var(--text-color);
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+    .create-team-btn:hover {
+        background: #0D8CE0;
+        transform: scale(1.02);
+    }
+
+@media (max-width: 768px) {
+    .team-card {
+        padding: 20px;
+    }
+
+    .invite-form {
+        flex-direction: column;
+    }
+
+    .team-members li,
+    .team-invitations li {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+        .team-invitations li button {
+            width: 100%;
+        }
+}
+
+@media (max-width: 480px) {
+    .team-card h3 {
+        font-size: 20px;
+    }
+
+    .team-members h4,
+    .team-invitations h4 {
+        font-size: 18px;
+    }
+
+    .team-members li,
+    .team-invitations li {
+        font-size: 14px;
+    }
+
+    .create-team-btn {
+        width: 100%;
+        font-size: 16px;
+    }
+}

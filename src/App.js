@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import Navbar from './components/Navbar';
 import Signup from './components/Signup';
 import Login from './components/Login';
 import Protected from './components/Protected';
@@ -9,14 +10,20 @@ import Teams from './components/Teams';
 import TournamentCreate from './components/TournamentCreate';
 import Tournaments from './components/Tournaments';
 import './App.css';
+import './styles.css';
 
 function App() {
     return (
         <Router>
-            <div className="App">
-                <h1>Esports Platform MVP</h1>
+            <Navbar />
+            <div className="container">
                 <Routes>
-                    <Route path="/" element={<p>Welcome! <a href="/signup">Sign Up</a> or <a href="/login">Login</a></p>} />
+                    <Route path="/" element={
+                        <div className="home-container">
+                            <h1>Welcome to Esports Platform</h1>
+                            <p><a href="/signup">Sign Up</a> <a href="/login">Login</a></p>
+                        </div>
+                    } />
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/protected" element={<Protected />} />

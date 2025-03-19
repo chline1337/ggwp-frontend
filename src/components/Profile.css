@@ -1,0 +1,197 @@
+.profile-container {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+}
+
+.profile-card {
+    background: var(--card-background);
+    padding: 40px 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    width: 100%;
+    max-width: 500px; /* Slimmer, modern width */
+    transition: transform 0.3s ease;
+}
+
+    .profile-card:hover {
+        transform: translateY(-5px); /* Subtle lift on hover */
+    }
+
+    .profile-card h2 {
+        text-align: center;
+        font-size: 32px;
+        font-weight: 900;
+        color: var(--text-color);
+        margin-bottom: 30px;
+        letter-spacing: 1px;
+    }
+
+.profile-info p {
+    font-size: 18px;
+    margin: 15px 0;
+    color: #bbb;
+}
+
+.game-accounts {
+    margin-top: 20px;
+}
+
+    .game-accounts h3 {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--secondary-color);
+        margin-bottom: 15px;
+    }
+
+    .game-accounts ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    .game-accounts li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        background: #2A2A2A;
+        border-radius: 8px;
+        margin: 10px 0;
+        font-size: 16px;
+    }
+
+    .game-accounts button {
+        background: #dc3545;
+        padding: 6px 15px;
+        border: none;
+        border-radius: 25px; /* Twitter-style rounded button */
+        color: var(--text-color);
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+        .game-accounts button:hover {
+            background: #c82333;
+            transform: scale(1.05);
+        }
+
+.add-game-form {
+    margin-top: 25px;
+}
+
+    .add-game-form .form-input-group {
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+    .add-game-form input {
+        width: 100%;
+        padding: 12px 0;
+        border: none;
+        border-bottom: 2px solid var(--border-color);
+        background: transparent;
+        color: var(--text-color);
+        font-size: 16px;
+        font-weight: 400;
+        outline: none;
+        transition: border-color 0.3s ease;
+    }
+
+        .add-game-form input:focus {
+            border-color: var(--secondary-color);
+        }
+
+        .add-game-form input::placeholder {
+            color: #888;
+            font-size: 14px;
+            transition: transform 0.3s ease, font-size 0.3s ease, color 0.3s ease;
+        }
+
+        .add-game-form input:focus::placeholder {
+            transform: translateY(-20px);
+            font-size: 12px;
+            color: var(--secondary-color);
+        }
+
+    .add-game-form button {
+        width: 100%;
+        padding: 14px;
+        background: var(--secondary-color);
+        color: var(--text-color);
+        border: none;
+        border-radius: 25px;
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+        .add-game-form button:hover {
+            background: #0D8CE0;
+            transform: scale(1.02);
+        }
+
+.profile-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+    .profile-buttons button {
+        flex: 1;
+        padding: 12px;
+        background: var(--primary-color);
+        color: var(--text-color);
+        border: none;
+        border-radius: 25px;
+        font-size: 16px;
+        font-weight: 700;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+        .profile-buttons button:hover {
+            background: #FF6F00;
+            transform: scale(1.02);
+        }
+
+@media (max-width: 480px) {
+    .profile-card {
+        padding: 20px;
+        max-width: 90%;
+    }
+
+        .profile-card h2 {
+            font-size: 28px;
+        }
+
+    .profile-info p {
+        font-size: 16px;
+    }
+
+    .game-accounts li {
+        font-size: 14px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .game-accounts button {
+        width: 100%;
+    }
+
+    .add-game-form .form-input-group {
+        margin-bottom: 15px;
+    }
+
+    .profile-buttons {
+        flex-direction: column;
+    }
+
+        .profile-buttons button {
+            width: 100%;
+        }
+}

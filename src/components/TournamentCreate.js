@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-
+import './Tournaments.css';
 function TournamentCreate() {
     const [formData, setFormData] = useState({
         name: '', game: '', format: 'single_elimination', participantType: 'user',

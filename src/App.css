@@ -1,4 +1,49 @@
-.App {
+.home-container {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
     text-align: center;
-    margin-top: 50px;
+    padding-top: 80px;
+}
+
+    .home-container h1 {
+        font-size: 48px;
+        font-weight: 900;
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        color: transparent;
+    }
+
+    .home-container p {
+        font-size: 20px;
+        margin-top: 20px;
+    }
+
+    .home-container a {
+        font-size: 18px;
+        font-weight: 700;
+        padding: 10px 20px;
+        background: var(--secondary-color);
+        border-radius: 8px;
+        margin: 0 10px;
+        display: inline-block;
+    }
+
+        .home-container a:hover {
+            background: #0D8CE0;
+        }
+
+@media (max-width: 480px) {
+    .home-container h1 {
+        font-size: 32px;
+    }
+
+    .home-container p {
+        font-size: 16px;
+    }
+
+    .home-container a {
+        display: block;
+        margin: 10px 0;
+    }
 }

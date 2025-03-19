@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import './Profile.css';
 
 function Profile() {
     const [user, setUser] = useState(null);
@@ -66,44 +67,53 @@ function Profile() {
     if (!user) return <p>Loading...</p>;
 
     return (
-        <div>
-            <h2>Profile</h2>
-            <p>Username: {user.username}</p>
-            <p>Email: {user.email}</p>
-            <h3>Game Accounts</h3>
-            <ul>
-                {user.gameAccounts.map((acc, index) => (
-                    <li key={index}>
-                        {acc.gameName}: {acc.accountId}{' '}
-                        <button onClick={() => removeGameAccount(acc.gameName, acc.accountId)}>Remove</button>
-                    </li>
-                ))}
-            </ul>
-            <form onSubmit={addGameAccount}>
-                <input
-                    type="text"
-                    name="gameName"
-                    placeholder="Game Name"
-                    value={gameForm.gameName}
-                    onChange={handleGameChange}
-                    required
-                />
-                <input
-                    type="text"
-                    name="accountId"
-                    placeholder="Account ID"
-                    value={gameForm.accountId}
-                    onChange={handleGameChange}
-                    required
-                />
-                <button type="submit">Add Game Account</button>
-            </form>
-            <button onClick={() => navigate('/teams')}>My Teams</button>
-         
-            <button onClick={() => navigate('/tournaments')}>Tournaments</button>
-            <button onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('userId'); navigate('/login'); }}>Logout</button>
-
-
+        <div className="profile-container">
+            <div className="profile-card">
+                <h2>Profile</h2>
+                <div className="profile-info">
+                    <p>Username: {user.username}</p>
+                    <p>Email: {user.email}</p>
+                </div>
+                <div className="game-accounts">
+                    <h3>Game Accounts</h3>
+                    <ul>
+                        {user.gameAccounts.map((acc, index) => (
+                            <li key={index}>
+                                {acc.gameName}: {acc.accountId}
+                                <button onClick={() => removeGameAccount(acc.gameName, acc.accountId)}>Remove</button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+                <form className="add-game-form" onSubmit={addGameAccount}>
+                    <div className="form-input-group">
+                        <input
+                            type="text"
+                            name="gameName"
+                            placeholder="Game Name"
+                            value={gameForm.gameName}
+                            onChange={handleGameChange}
+                            required
+                        />
+                    </div>
+                    <div className="form-input-group">
+                        <input
+                            type="text"
+                            name="accountId"
+                            placeholder="Account ID"
+                            value={gameForm.accountId}
+                            onChange={handleGameChange}
+                            required
+                        />
+                    </div>
+                    <button type="submit">Add Game Account</button>
+                </form>
+                <div className="profile-buttons">
+                    <button onClick={() => navigate('/teams')}>My Teams</button>
+                    <button onClick={() => navigate('/tournaments')}>Tournaments</button>
+                    <button onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('userId'); navigate('/login'); }}>Logout</button>
+                </div>
+            </div>
         </div>
     );
 }

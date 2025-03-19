@@ -1,0 +1,146 @@
+.navbar {
+    background: var(--card-background);
+    padding: 15px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    display: grid;
+    grid-template-columns: auto 1fr auto; /* Logo, links, logout */
+    align-items: center;
+    transition: background-color 0.3s ease;
+}
+
+    .navbar:hover {
+        background: #1A1A1A; /* Slight lighten on hover */
+    }
+
+.navbar-logo a {
+    color: var(--primary-color);
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+    .navbar-logo a:hover {
+        color: #FF6F00; /* Lighter orange on hover */
+    }
+
+.navbar-links {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+    .navbar-links a {
+        color: var(--text-color);
+        font-size: 18px;
+        font-weight: 700;
+        padding: 8px 15px;
+        border-radius: 25px; /* Twitter-style rounded links */
+        text-decoration: none;
+        transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+    }
+
+        .navbar-links a:hover {
+            background: rgba(29, 161, 242, 0.1); /* Twitter blue hover */
+            color: var(--secondary-color);
+            transform: scale(1.05);
+        }
+
+.navbar-logout {
+    display: flex;
+    align-items: center;
+}
+
+    .navbar-logout button {
+        background: var(--secondary-color);
+        color: var(--text-color);
+        padding: 10px 20px;
+        border: none;
+        border-radius: 25px;
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+        .navbar-logout button:hover {
+            background: #0D8CE0;
+            transform: scale(1.02);
+        }
+
+.hamburger {
+    display: none;
+    font-size: 28px;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+    .hamburger:hover {
+        color: var(--secondary-color);
+    }
+
+@media (max-width: 768px) {
+    .navbar {
+        grid-template-columns: auto auto; /* Logo and hamburger */
+    }
+
+    .navbar-links,
+    .navbar-logout {
+        display: none;
+    }
+
+        .navbar-links.active {
+            display: flex;
+            flex-direction: column;
+            position: absolute;
+            top: 60px;
+            left: 0;
+            width: 100%;
+            background: var(--card-background);
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+            .navbar-links.active a {
+                padding: 12px;
+                text-align: center;
+            }
+
+        .navbar-logout.active {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+    .hamburger {
+        display: block;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar {
+        padding: 10px 15px;
+    }
+
+    .navbar-logo a {
+        font-size: 24px;
+    }
+
+    .navbar-links.active a {
+        font-size: 16px;
+    }
+
+    .navbar-logout button {
+        font-size: 14px;
+        padding: 8px 15px;
+    }
+}

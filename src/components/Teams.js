@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import './Teams.css';
 
 function Teams() {
     const [teams, setTeams] = useState([]);
@@ -89,23 +90,24 @@ function Teams() {
     const currentUserId = localStorage.getItem('userId');
 
     return (
-        <div>
-            <h2>My Teams</h2>
-            <button onClick={() => navigate('/team-create')}>Create New Team</button>
+        <div className="teams-container">
+            <button className="create-team-btn" onClick={() => navigate('/team-create')}>Create New Team</button>
             {teams.map((team) => (
-                <div key={team._id}>
+                <div key={team._id} className="team-card">
                     <h3>{team.name}</h3>
                     <p>{team.description}</p>
                     <p>Captain: {team.captain.username}</p>
-                    <h4>Members</h4>
-                    <ul>
-                        {team.members.map((member, index) => (
-                            <li key={index}>{member.user.username} ({member.role})</li>
-                        ))}
-                    </ul>
+                    <div className="team-members">
+                        <h4>Members</h4>
+                        <ul>
+                            {team.members.map((member, index) => (
+                                <li key={index}>{member.user.username} ({member.role})</li>
+                            ))}
+                        </ul>
+                    </div>
                     {team.captain._id.toString() === currentUserId && (
                         <>
-                            <form onSubmit={sendInvite}>
+                            <form className="invite-form" onSubmit={sendInvite}>
                                 <input
                                     type="text"
                                     name="username"
@@ -119,16 +121,22 @@ function Teams() {
                             <button onClick={() => deleteTeam(team._id)}>Delete Team</button>
                         </>
                     )}
-                    <h4>Pending Invitations</h4>
-                    <ul>
-                        {team.invitations.map((inv, index) => (
-                            <li key={index}>
-                                {inv.user.username}{' '}
-                                <button onClick={() => respondToInvite(team._id, true)}>Accept</button>
-                                <button onClick={() => respondToInvite(team._id, false)}>Decline</button>
-                            </li>
-                        ))}
-                    </ul>
+                    <div className="team-invitations">
+                        <h4>Pending Invitations</h4>
+                        <ul>
+                            {team.invitations.map((inv, index) => (
+                                <li key={index}>
+                                    {inv.user.username}
+                                    {inv.user._id.toString() === currentUserId && (
+                                        <>
+                                            <button onClick={() => respondToInvite(team._id, true)}>Accept</button>
+                                            <button onClick={() => respondToInvite(team._id, false)}>Decline</button>
+                                        </>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
                 </div>
             ))}
         </div>

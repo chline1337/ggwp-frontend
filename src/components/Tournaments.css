@@ -1,0 +1,232 @@
+.tournaments-container {
+    min-height: 100vh;
+    padding-top: 80px; /* Space for sticky navbar */
+    padding-bottom: 20px;
+}
+
+.tournament-card {
+    background: var(--card-background);
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    margin-bottom: 20px;
+    transition: transform 0.3s ease;
+}
+
+    .tournament-card:hover {
+        transform: translateY(-5px); /* Subtle lift on hover */
+    }
+
+    .tournament-card h3 {
+        font-size: 24px;
+        font-weight: 900;
+        color: var(--primary-color);
+        margin-bottom: 15px;
+        letter-spacing: 0.5px;
+    }
+
+    .tournament-card p {
+        font-size: 16px;
+        color: #bbb;
+        margin: 10px 0;
+    }
+
+.participants-list h4,
+.bracket h4 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--secondary-color);
+    margin: 15px 0 10px;
+}
+
+.participants-list ul {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.participants-list li {
+    padding: 12px;
+    background: #2A2A2A;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+.bracket {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.round {
+    background: #2A2A2A;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    min-width: 250px;
+    transition: transform 0.3s ease;
+}
+
+    .round:hover {
+        transform: translateY(-3px);
+    }
+
+    .round h5 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-color);
+        margin-bottom: 10px;
+    }
+
+    .round ul {
+        list-style: none;
+        padding: 0;
+    }
+
+.match {
+    padding: 12px;
+    margin: 5px 0;
+    background: #1E1E1E;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+.participant {
+    color: var(--text-color);
+    font-weight: 700;
+}
+
+.vs {
+    margin: 0 10px;
+    color: #888;
+}
+
+.result {
+    font-size: 14px;
+    color: #bbb;
+    margin-top: 5px;
+}
+
+.signup-form {
+    display: flex;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+    .signup-form input {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-bottom: 2px solid var(--border-color);
+        background: transparent;
+        color: var(--text-color);
+        font-size: 16px;
+        outline: none;
+        transition: border-color 0.3s ease;
+    }
+
+        .signup-form input:focus {
+            border-color: var(--secondary-color);
+        }
+
+        .signup-form input::placeholder {
+            color: #888;
+            font-size: 14px;
+            transition: transform 0.3s ease, font-size 0.3s ease, color 0.3s ease;
+        }
+
+        .signup-form input:focus::placeholder {
+            transform: translateY(-20px);
+            font-size: 12px;
+            color: var(--secondary-color);
+        }
+
+    .actions,
+    .signup-form button,
+    .tournament-card > button {
+        margin-top: 10px;
+    }
+
+        .actions button,
+        .signup-form button,
+        .tournament-card > button {
+            background: var(--gradient);
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            color: var(--text-color);
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+            .actions button:hover,
+            .signup-form button:hover,
+            .tournament-card > button:hover {
+                background: linear-gradient(135deg, #FF6F00, #FFA500);
+                transform: scale(1.02);
+            }
+
+.create-tournament-btn {
+    display: block;
+    width: 200px;
+    margin: 0 auto 20px;
+    background: var(--secondary-color);
+    padding: 12px;
+    border: none;
+    border-radius: 25px;
+    color: var(--text-color);
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+    .create-tournament-btn:hover {
+        background: #0D8CE0;
+        transform: scale(1.02);
+    }
+
+@media (max-width: 768px) {
+    .tournament-card {
+        padding: 20px;
+    }
+
+    .bracket {
+        flex-direction: column;
+    }
+
+    .round {
+        min-width: 100%;
+    }
+
+    .signup-form {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .tournament-card h3 {
+        font-size: 20px;
+    }
+
+    .participants-list h4,
+    .bracket h4 {
+        font-size: 18px;
+    }
+
+    .participants-list li,
+    .match {
+        font-size: 14px;
+    }
+
+    .create-tournament-btn {
+        width: 100%;
+        font-size: 16px;
+    }
+}
