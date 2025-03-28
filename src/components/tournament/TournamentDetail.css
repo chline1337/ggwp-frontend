@@ -1,36 +1,211 @@
-.tournament-detail-container {
+/* ... (rest of TournamentDetail.css unchanged) */
+
+/* Tournament Create Container */
+.tournament-create-container {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 20px 0;
+    width: 100%; /* Ensure full width */
+}
+
+/* Tournament Create Form */
+.tournament-create-form {
+    background: var(--card-background); /* #1E1E1E */
+    padding: 40px 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    width: 100%;
+    max-width: 500px; /* Consistent with other forms */
+    transition: transform 0.3s ease;
+}
+
+    .tournament-create-form:hover {
+        transform: translateY(-5px); /* Subtle lift on hover */
+    }
+
+    .tournament-create-form h2 {
+        text-align: center;
+        font-size: 32px;
+        font-weight: 900;
+        color: var(--text-color); /* #E0E0E0 */
+        margin-bottom: 30px;
+        letter-spacing: 1px;
+    }
+
+/* Form Inputs and Selects */
+.form-input-group {
+    position: relative;
+    margin-bottom: 25px;
+}
+
+.tournament-create-form input,
+.tournament-create-form select {
+    width: 100%;
+    padding: 12px 0;
+    border: none;
+    border-bottom: 2px solid var(--border-color); /* #333333 */
+    background: transparent;
+    color: var(--text-color); /* #E0E0E0 */
+    font-size: 18px;
+    font-weight: 400;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+    .tournament-create-form input:focus,
+    .tournament-create-form select:focus {
+        border-color: var(--secondary-color); /* #1DA1F2 */
+    }
+
+    .tournament-create-form input::placeholder,
+    .tournament-create-form select:placeholder-shown {
+        color: #888;
+        font-size: 16px;
+        transition: transform 0.3s ease, font-size 0.3s ease, color 0.3s ease;
+    }
+
+    .tournament-create-form input:focus::placeholder,
+    .tournament-create-form select:focus:placeholder-shown {
+        transform: translateY(-20px);
+        font-size: 12px;
+        color: var(--secondary-color); /* #1DA1F2 */
+    }
+
+.tournament-create-form select {
+    appearance: none; /* Remove default dropdown arrow */
+    padding: 12px; /* Match input padding */
+}
+
+/* Submit Button */
+.tournament-create-form button {
+    width: 100%;
+    padding: 14px;
+    background: var(--secondary-color); /* #1DA1F2 */
+    color: var(--text-color); /* #E0E0E0 */
+    border: none;
+    border-radius: 25px;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+    .tournament-create-form button:hover {
+        background: #0D8CE0; /* Darker blue */
+        transform: scale(1.02);
+    }
+
+/* Responsive Adjustments */
+@media (max-width: 480px) {
+    .tournament-create-form {
+        padding: 20px;
+        max-width: 90%;
+    }
+
+        .tournament-create-form h2 {
+            font-size: 28px;
+        }
+
+        .tournament-create-form input,
+        .tournament-create-form select {
+            font-size: 16px;
+        }
+
+        .tournament-create-form button {
+            font-size: 16px;
+            padding: 12px;
+        }
+
+    .form-input-group {
+        margin-bottom: 20px;
+    }
+}
+
+/* ... (rest of TournamentDetail.css unchanged) */
+
+.tournament-list-container {
     min-height: 100vh;
     padding-top: 80px;
     padding-bottom: 20px;
 }
 
-.tournament-card {
-    background: var(--card-background);
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-    width: 100%;
-    margin: 0 auto 20px;
-    transition: transform 0.3s ease;
+.tournament-list-header {
+    text-align: center;
+    margin-bottom: 40px;
 }
 
-    .tournament-card:hover {
-        transform: translateY(-5px);
-    }
-
-    .tournament-card h3 {
-        font-size: 28px;
+    .tournament-list-header h2 {
+        font-size: 36px;
         font-weight: 900;
-        color: var(--primary-color);
-        margin-bottom: 20px;
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        color: transparent;
         letter-spacing: 1px;
     }
 
-    .tournament-card p {
-        font-size: 16px;
-        color: #bbb;
-        margin: 10px 0;
+.create-tournament-btn {
+    display: block;
+    width: 200px;
+    margin: 20px auto;
+    background: var(--secondary-color);
+    padding: 12px;
+    border: none;
+    border-radius: 25px;
+    color: var(--text-color);
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+    .create-tournament-btn:hover {
+        background: #0D8CE0;
+        transform: scale(1.02);
     }
+
+.tournament-row {
+    display: flex;
+    overflow-x: auto;
+    gap: 20px;
+    padding: 20px 0;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+}
+
+.tournament-card {
+    flex: 0 0 300px;
+    background: var(--card-background);
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    padding: 20px;
+    transition: box-shadow 0.3s ease; 
+    scroll-snap-align: start;
+}
+
+    .tournament-card:hover {
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.5);
+    }
+    .tournament-card h3 {
+        font-size: 20px;
+        font-weight: 900;
+        color: var(--primary-color);
+        margin-bottom: 10px;
+    }
+
+    .tournament-card p {
+        font-size: 14px;
+        color: #bbb;
+        margin: 5px 0;
+    }
+
+.tournament-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
 
 .participants-list h4,
 .bracket h4 {
@@ -63,7 +238,7 @@
     width: 100%;
     position: relative;
     min-height: 400px;
-    align-items: center; /* Center all rounds vertically */
+    align-items: center; 
 }
 
 .round {
@@ -77,7 +252,7 @@
     .round.centered-round {
         display: flex;
         flex-direction: column;
-        justify-content: center; /* Center matches vertically within later rounds */
+        justify-content: center;
     }
 
     .round:hover {

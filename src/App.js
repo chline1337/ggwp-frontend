@@ -4,12 +4,12 @@ import Navbar from './components/Navbar';
 import Signup from './components/Signup';
 import Login from './components/Login';
 import Protected from './components/Protected';
-import Profile from './components/Profile';
-import TeamCreate from './components/TeamCreate';
-import Teams from './components/Teams';
-import TournamentCreate from './components/TournamentCreate';
-import TournamentList from './components/TournamentList';
-import TournamentDetail from './components/TournamentDetail';
+import Profile from './components/profile/Profile';
+import TeamCreate from './components/team/TeamCreate'; // Updated path
+import Teams from './components/team/Teams'; // Already updated
+import TournamentCreate from './components/tournament/TournamentCreate';
+import TournamentList from './components/tournament/TournamentList';
+import TournamentDetail from './components/tournament/TournamentDetail';
 import './App.css';
 import './styles.css';
 

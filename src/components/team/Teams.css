@@ -1,7 +1,30 @@
+/* src/components/team/Teams.css */
 .teams-container {
-    padding-top: 20px; /* Reduced from 80px, handled by .container */
+    padding-top: 80px; /* Space for sticky navbar */
     padding-bottom: 20px;
+    width: 100%;
 }
+
+.create-team-btn {
+    display: block;
+    width: 200px;
+    margin: 20px auto;
+    background: var(--secondary-color);
+    padding: 12px;
+    border: none;
+    border-radius: 25px;
+    color: var(--text-color);
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+    .create-team-btn:hover {
+        background: #0D8CE0;
+        transform: scale(1.02);
+    }
 
 .team-card {
     background: var(--card-background);
@@ -9,11 +32,11 @@
     border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
     margin-bottom: 20px;
-    transition: transform 0.3s ease;
+    transition: box-shadow 0.3s ease;
 }
 
     .team-card:hover {
-        transform: translateY(-5px); /* Subtle lift on hover */
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.5);
     }
 
     .team-card h3 {
@@ -21,7 +44,6 @@
         font-weight: 900;
         color: var(--primary-color);
         margin-bottom: 15px;
-        letter-spacing: 0.5px;
     }
 
     .team-card p {
@@ -46,40 +68,12 @@
 
 .team-members li,
 .team-invitations li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     padding: 12px;
     background: #2A2A2A;
     border-radius: 8px;
-    margin: 10px 0;
     font-size: 16px;
+    margin-bottom: 10px;
 }
-
-    .team-invitations li button {
-        background: var(--secondary-color);
-        padding: 6px 15px;
-        border: none;
-        border-radius: 25px;
-        color: var(--text-color);
-        font-size: 14px;
-        font-weight: 700;
-        margin-left: 10px;
-        transition: background-color 0.3s ease, transform 0.2s ease;
-    }
-
-        .team-invitations li button:hover {
-            background: #0D8CE0;
-            transform: scale(1.05);
-        }
-
-        .team-invitations li button:nth-child(2) {
-            background: #dc3545; /* Red for Decline */
-        }
-
-            .team-invitations li button:nth-child(2):hover {
-                background: #c82333;
-            }
 
 .invite-form {
     display: flex;
@@ -115,10 +109,10 @@
             color: var(--secondary-color);
         }
 
-    .invite-form button,
-    .team-card > button {
+    .team-card button,
+    .invite-form button {
         background: var(--gradient);
-        padding: 12px 20px;
+        padding: 10px 20px;
         border: none;
         border-radius: 25px;
         color: var(--text-color);
@@ -126,34 +120,14 @@
         font-weight: 700;
         cursor: pointer;
         transition: background-color 0.3s ease, transform 0.2s ease;
+        margin-top: 10px;
     }
 
-        .invite-form button:hover,
-        .team-card > button:hover {
+        .team-card button:hover,
+        .invite-form button:hover {
             background: linear-gradient(135deg, #FF6F00, #FFA500);
             transform: scale(1.02);
         }
-
-.create-team-btn {
-    display: block;
-    width: 200px;
-    margin: 0 auto 20px;
-    background: var(--secondary-color);
-    padding: 12px;
-    border: none;
-    border-radius: 25px;
-    color: var(--text-color);
-    font-size: 18px;
-    font-weight: 700;
-    text-align: center;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-    .create-team-btn:hover {
-        background: #0D8CE0;
-        transform: scale(1.02);
-    }
 
 @media (max-width: 768px) {
     .team-card {
@@ -163,17 +137,6 @@
     .invite-form {
         flex-direction: column;
     }
-
-    .team-members li,
-    .team-invitations li {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-
-        .team-invitations li button {
-            width: 100%;
-        }
 }
 
 @media (max-width: 480px) {

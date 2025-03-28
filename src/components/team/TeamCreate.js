@@ -1,28 +1,19 @@
+// src/components/team/TeamCreate.js
 import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import useTeamActions from '../../hooks/useTeamActions';
 import './TeamCreate.css';
 
 function TeamCreate() {
+    const { createTeam } = useTeamActions();
     const [formData, setFormData] = useState({ name: '', description: '' });
-    const navigate = useNavigate();
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
-        const token = localStorage.getItem('token');
-        try {
-            await axios.post(`${process.env.REACT_APP_API_URL}/api/team/create`, formData, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            alert('Team created successfully');
-            navigate('/teams');
-        } catch (err) {
-            alert(err.response.data.msg);
-        }
+        createTeam(formData);
     };
 
     return (
