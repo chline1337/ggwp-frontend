@@ -18,7 +18,7 @@
 }
 
 html {
-    scroll-behavior: smooth; /* Smooth scrolling */
+    scroll-behavior: smooth;
 }
 
 body {
@@ -28,7 +28,7 @@ body {
     line-height: 1.6;
     margin: 0;
     padding: 0;
-    overflow-x: hidden; /* Prevent horizontal overflow */
+    overflow-x: hidden;
 }
 
 a {
@@ -49,11 +49,18 @@ button {
         transform: translateY(-2px);
     }
 
+/* Full-width container */
 .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    min-height: calc(100vh - 60px); /* Adjust for navbar height */
+    width: 100vw; /* Full viewport width */
+    margin: 0;
+    padding: 20px; /* Consistent padding */
+    min-height: calc(100vh - 60px); /* Adjust for navbar */
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw; /* Extend beyond parent constraints */
+    box-sizing: border-box;
 }
 
 @media (max-width: 768px) {

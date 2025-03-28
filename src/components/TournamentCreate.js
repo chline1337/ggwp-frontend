@@ -9,7 +9,7 @@ function TournamentCreate() {
         game: '',
         format: 'single_elimination',
         participantType: 'user',
-        maxParticipants: '',
+        maxParticipants: '4', // Default to smallest size
         groups: '',
         groupSize: '',
     });
@@ -71,14 +71,18 @@ function TournamentCreate() {
                 </div>
                 {formData.format === 'single_elimination' && (
                     <div className="form-input-group">
-                        <input
-                            type="number"
+                        <select
                             name="maxParticipants"
-                            placeholder="Max Participants"
                             value={formData.maxParticipants}
                             onChange={handleChange}
                             required
-                        />
+                        >
+                            <option value="4">4 Players/Teams</option>
+                            <option value="8">8 Players/Teams</option>
+                            <option value="16">16 Players/Teams</option>
+                            <option value="32">32 Players/Teams</option>
+                            <option value="64">64 Players/Teams</option>
+                        </select>
                     </div>
                 )}
                 {formData.format === 'group_stage' && (
