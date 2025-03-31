@@ -1,7 +1,7 @@
 // src/components/tournament/TournamentCreateForm.js
 import React, { useState } from 'react';
 
-function TournamentCreateForm({ createTournament }) {
+function TournamentCreateForm({ createTournament, allTeams, selectedTeams, setSelectedTeams }) {
     const [formData, setFormData] = useState({
         name: '',
         game: '',
@@ -11,9 +11,17 @@ function TournamentCreateForm({ createTournament }) {
         groups: '',
         groupSize: '',
     });
+    const [selectedTeamId, setSelectedTeamId] = useState('');
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleAddTeam = () => {
+        if (selectedTeamId && !selectedTeams.includes(selectedTeamId)) {
+            setSelectedTeams([...selectedTeams, selectedTeamId]);
+            setSelectedTeamId('');
+        }
     };
 
     const handleSubmit = (e) => {
@@ -56,6 +64,28 @@ function TournamentCreateForm({ createTournament }) {
                     <option value="team">Team</option>
                 </select>
             </div>
+            {formData.participantType === 'team' && (
+                <div className="form-input-group add-team-form">
+                    <select
+                        value={selectedTeamId}
+                        onChange={(e) => setSelectedTeamId(e.target.value)}
+                    >
+                        <option value="">Select a team</option>
+                        {allTeams.map((team) => (
+                            <option key={team._id} value={team._id}>{team.name}</option>
+                        ))}
+                    </select>
+                    <button type="button" onClick={handleAddTeam}>Add Team</button>
+                    {selectedTeams.length > 0 && (
+                        <ul>
+                            {selectedTeams.map((teamId) => {
+                                const team = allTeams.find(t => t._id === teamId);
+                                return <li key={teamId}>{team?.name}</li>;
+                            })}
+                        </ul>
+                    )}
+                </div>
+            )}
             {formData.format === 'single_elimination' && (
                 <div className="form-input-group">
                     <select

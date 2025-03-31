@@ -3,6 +3,7 @@ import React from 'react';
 import { useParams } from 'react-router-dom';
 import useTournament from '../../hooks/useTournament';
 import useUsers from '../../hooks/useUsers';
+import useTeamActions from '../../hooks/useTeamActions';
 import useTournamentActions from '../../hooks/useTournamentActions';
 import TournamentHeader from './TournamentHeader';
 import ParticipantsList from './ParticipantsList';
@@ -10,6 +11,7 @@ import SignupForm from './SignupForm';
 import AddUserForm from './AddUserForm';
 import Bracket from './Bracket';
 import GroupStage from './GroupStage';
+import AddTeamForm from './AddTeamForm';
 import './TournamentDetail.css';
 
 function TournamentDetail() {
@@ -17,6 +19,7 @@ function TournamentDetail() {
     const { tournament, loading, refreshTournament } = useTournament(id);
     const { startTournament } = useTournamentActions();
     const users = useUsers();
+    const { allTeams } = useTeamActions(); // Fetch all teams
     const currentUserId = localStorage.getItem('userId');
 
     if (loading) return <p>Loading...</p>;
@@ -33,16 +36,15 @@ function TournamentDetail() {
         <div className="tournament-detail-container">
             <div className="tournament-card">
                 <TournamentHeader tournament={tournament} />
-                <ParticipantsList participants={tournament.participants} />
+                <ParticipantsList participants={tournament.participants} participantType={tournament.participantType} />
                 {tournament.status === 'open' && (
                     <>
                         <SignupForm tournament={tournament} refreshTournament={refreshTournament} />
                         {isOrganizer && tournament.participantType === 'user' && (
-                            <AddUserForm
-                                tournamentId={tournament._id}
-                                users={users}
-                                refreshTournament={refreshTournament}
-                            />
+                            <AddUserForm tournamentId={tournament._id} users={users} refreshTournament={refreshTournament} />
+                        )}
+                        {isOrganizer && tournament.participantType === 'team' && (
+                            <AddTeamForm tournamentId={tournament._id} allTeams={allTeams} refreshTournament={refreshTournament} />
                         )}
                     </>
                 )}
@@ -52,18 +54,10 @@ function TournamentDetail() {
                 {tournament.status === 'started' && (
                     <>
                         {tournament.format === 'single_elimination' && (
-                            <Bracket
-                                tournament={tournament}
-                                isOrganizer={isOrganizer}
-                                refreshTournament={refreshTournament}
-                            />
+                            <Bracket tournament={tournament} isOrganizer={isOrganizer} refreshTournament={refreshTournament} />
                         )}
                         {tournament.format === 'group_stage' && (
-                            <GroupStage
-                                tournament={tournament}
-                                isOrganizer={isOrganizer}
-                                refreshTournament={refreshTournament}
-                            />
+                            <GroupStage tournament={tournament} isOrganizer={isOrganizer} refreshTournament={refreshTournament} />
                         )}
                     </>
                 )}
