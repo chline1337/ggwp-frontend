@@ -1,9 +1,13 @@
 // src/components/tournament/SignupForm.js
 import React, { useState } from 'react';
 import axios from 'axios';
+import useTeamActions from '../../hooks/useTeamActions';
 
 function SignupForm({ tournament, refreshTournament }) {
     const [signupForm, setSignupForm] = useState({ teamId: '' });
+    const { teams } = useTeamActions(); // Fetch user's teams
+    const currentUserId = localStorage.getItem('userId');
+    const isCaptain = teams.some(team => team.captain._id.toString() === currentUserId);
 
     const handleSignupChange = (e) => {
         setSignupForm({ ...signupForm, [e.target.name]: e.target.value });
@@ -23,19 +27,25 @@ function SignupForm({ tournament, refreshTournament }) {
         }
     };
 
-    return tournament.participantType === 'user' ? (
-        <button onClick={() => signup(false)}>Sign Up</button>
-    ) : (
-        <form className="signup-form" onSubmit={(e) => { e.preventDefault(); signup(true); }}>
-            <input
-                type="text"
-                name="teamId"
-                placeholder="Team ID"
-                value={signupForm.teamId}
-                onChange={handleSignupChange}
-            />
-            <button type="submit">Sign Up Team</button>
-        </form>
+    return (
+        <>
+            {tournament.participantType === 'user' ? (
+                <button onClick={() => signup(false)}>Sign Up</button>
+            ) : isCaptain ? (
+                <form className="signup-form" onSubmit={(e) => { e.preventDefault(); signup(true); }}>
+                    <input
+                        type="text"
+                        name="teamId"
+                        placeholder="Team ID"
+                        value={signupForm.teamId}
+                        onChange={handleSignupChange}
+                    />
+                    <button type="submit">Sign Up Team</button>
+                </form>
+            ) : (
+                <p>You need to be a team captain to sign up.</p>
+            )}
+        </>
     );
 }
 

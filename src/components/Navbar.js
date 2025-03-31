@@ -8,15 +8,14 @@ function Navbar() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Check if token exists in localStorage to determine login status
         const token = localStorage.getItem('token');
-        setIsLoggedIn(!!token); // !! converts to boolean (true if token exists)
-    }, []); // Empty dependency array runs once on mount
+        setIsLoggedIn(!!token);
+    }, []);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('userId');
-        setIsLoggedIn(false); // Update state on logout
+        setIsLoggedIn(false);
         navigate('/login');
     };
 
@@ -27,9 +26,10 @@ function Navbar() {
             </div>
             <ul className={`navbar-links ${isOpen ? 'active' : ''}`}>
                 <li><Link to="/tournaments">Tournaments</Link></li>
+                <li><Link to="/events">Events</Link></li>
                 <li><Link to="/teams">Teams</Link></li>
                 <li><Link to="/profile">Profile</Link></li>
-
+                {isLoggedIn && <li><Link to="/create-event">Create Event</Link></li>} {/* Add this */}
             </ul>
             <div className={`navbar-logout ${isOpen ? 'active' : ''}`}>
                 {isLoggedIn && (

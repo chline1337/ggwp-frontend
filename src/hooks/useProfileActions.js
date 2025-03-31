@@ -37,7 +37,7 @@ const useProfileActions = () => {
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             setUser((prevUser) => ({ ...prevUser, gameAccounts: res.data }));
-            return true; // Indicate success
+            return true;
         } catch (err) {
             alert(err.response?.data.msg || 'Failed to add game account');
             return false;
@@ -60,11 +60,52 @@ const useProfileActions = () => {
         }
     }, []);
 
+    const updateProfile = useCallback(async (profileData) => {
+        const token = localStorage.getItem('token');
+        try {
+            const res = await axios.put(
+                `${process.env.REACT_APP_API_URL}/api/user/profile`,
+                profileData,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            setUser(res.data);
+            alert('Profile updated');
+        } catch (err) {
+            alert(err.response?.data.msg || 'Failed to update profile');
+        }
+    }, []);
+
+    const uploadAvatar = useCallback(async (file) => {
+        const token = localStorage.getItem('token');
+        if (!file || !['image/jpeg', 'image/png'].includes(file.type)) {
+            alert('Please upload a JPG or PNG file');
+            return;
+        }
+        const formData = new FormData();
+        formData.append('avatar', file);
+        try {
+            const res = await axios.post(
+                `${process.env.REACT_APP_API_URL}/api/user/profile/avatar`,
+                formData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
+            );
+            setUser(res.data);
+            alert('Avatar uploaded successfully');
+        } catch (err) {
+            alert(err.response?.data.msg || 'Failed to upload avatar');
+        }
+    }, []);
+
     useEffect(() => {
         fetchProfile();
     }, [fetchProfile]);
 
-    return { user, loading, fetchProfile, addGameAccount, removeGameAccount };
+    return { user, loading, fetchProfile, addGameAccount, removeGameAccount, updateProfile, uploadAvatar };
 };
 
 export default useProfileActions;

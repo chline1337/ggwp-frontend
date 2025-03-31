@@ -1,0 +1,32 @@
+.event-create-container {
+    padding: 20px;
+    color: white;
+    background-color: #000;
+}
+
+    .event-create-container form {
+        display: flex;
+        flex-direction: column;
+        max-width: 400px;
+    }
+
+    .event-create-container input,
+    .event-create-container textarea {
+        margin: 10px 0;
+        padding: 10px;
+        background-color: #333;
+        border: 1px solid #ccc;
+        color: white;
+    }
+
+    .event-create-container button {
+        padding: 10px;
+        background-color: #007bff;
+        border: none;
+        color: white;
+        cursor: pointer;
+    }
+
+        .event-create-container button:hover {
+            background-color: #0056b3;
+        }

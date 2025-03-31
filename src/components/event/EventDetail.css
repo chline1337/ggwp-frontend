@@ -1,0 +1,41 @@
+.event-detail-container {
+    padding: 20px;
+    color: white;
+    background-color: #000;
+}
+
+    .event-detail-container button {
+        padding: 10px;
+        background-color: #007bff;
+        border: none;
+        color: white;
+        cursor: pointer;
+    }
+
+        .event-detail-container button:hover {
+            background-color: #0056b3;
+        }
+
+.seatplan {
+    margin-top: 20px;
+}
+
+.seat-row {
+    display: flex;
+}
+
+.seat {
+    width: 40px;
+    height: 40px;
+    margin: 5px;
+    border: none;
+    color: white;
+}
+
+    .seat.available {
+        background-color: #28a745;
+    }
+
+    .seat.taken {
+        background-color: #dc3545;
+    }

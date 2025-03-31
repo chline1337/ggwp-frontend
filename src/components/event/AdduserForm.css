@@ -1,0 +1,24 @@
+.add-user-form {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+    .add-user-form select {
+        padding: 5px;
+        background-color: #333;
+        color: white;
+        border: 1px solid #ccc;
+    }
+
+    .add-user-form button {
+        padding: 5px 10px;
+        background-color: #007bff;
+        border: none;
+        color: white;
+        cursor: pointer;
+    }
+
+        .add-user-form button:hover {
+            background-color: #0056b3;
+        }

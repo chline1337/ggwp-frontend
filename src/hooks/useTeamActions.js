@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 const useTeamActions = () => {
     const [teams, setTeams] = useState([]);
+    const [allTeams, setAllTeams] = useState([]); // New state for all teams
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
@@ -25,6 +26,22 @@ const useTeamActions = () => {
             navigate('/login');
         } finally {
             setLoading(false);
+        }
+    }, [navigate]);
+
+    const fetchAllTeams = useCallback(async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+            return;
+        }
+        try {
+            const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/team`, { // New endpoint needed
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setAllTeams(res.data);
+        } catch (err) {
+            alert(err.response?.data.msg || 'Error fetching all teams');
         }
     }, [navigate]);
 
@@ -86,9 +103,10 @@ const useTeamActions = () => {
 
     useEffect(() => {
         fetchTeams();
-    }, [fetchTeams]);
+        fetchAllTeams(); // Fetch all teams on mount
+    }, [fetchTeams, fetchAllTeams]);
 
-    return { teams, loading, fetchTeams, createTeam, sendInvite, respondToInvite, deleteTeam };
+    return { teams, allTeams, loading, fetchTeams, fetchAllTeams, createTeam, sendInvite, respondToInvite, deleteTeam };
 };
 
 export default useTeamActions;
