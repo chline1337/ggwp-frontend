@@ -2,6 +2,8 @@
 
 This is the frontend for an esports platform Minimum Viable Product (MVP) built with React. It provides a user interface for user authentication, profile management, team management, and tournament creation and participation. The app connects to a Node.js backend, which can be hosted locally or on a platform like Heroku, to deliver a seamless esports experience.
 
+source venv/bin/activate && pip install -r requirements.txt
+
 ## Features
 
 - **User Authentication:**
