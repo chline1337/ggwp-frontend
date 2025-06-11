@@ -31,6 +31,13 @@ source venv/bin/activate && pip install -r requirements.txt
   - Update match results manually (organizer only).
   - View tournament details, including participants, matches, and current status.
 
+- **User Roles & Administration:**
+  - Two-tier role system: **Admin** and **User/Player** roles.
+  - Admin users have access to administrative features and can manage the platform.
+  - Role-based UI elements that show/hide based on user permissions.
+  - Protected admin routes that require administrator privileges.
+  - Admin dashboard for future platform management features.
+
 ## Tech Stack
 
 - **React**: The core framework for building the interactive user interface.

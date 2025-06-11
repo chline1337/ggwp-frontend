@@ -16,6 +16,9 @@ import TournamentDetail from './components/tournament/TournamentDetail';
 import EventDetail from './components/event/EventDetail';
 import EventList from './components/event/EventList';
 import EventCreate from './components/event/EventCreate';
+import Dashboard from './components/Dashboard';
+import AdminDashboard from './components/admin/AdminDashboard';
+import AdminRoute from './components/routes/AdminRoute';
 import './App.css';
 import './styles.css';
 
@@ -79,25 +82,57 @@ const theme = createTheme({
 });
 
 // Protected Route component
-const ProtectedRoute = ({ children }) => {
-    const { isAuthenticated, loading } = useAuth();
+const ProtectedRoute = ({ children, adminOnly = false }) => {
+    const { isAuthenticated, user, loading } = useAuth();
 
     if (loading) {
-        return null; // Or a loading spinner
+        return (
+            <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                minHeight: '200px' 
+            }}>
+                Loading...
+            </div>
+        );
     }
 
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
     }
 
+    // Check admin role requirement
+    if (adminOnly && user?.role !== 'admin') {
+        return <Navigate to="/dashboard" replace />;
+    }
+
     return children;
+};
+
+// Home Route Redirect component
+const HomeRedirect = ({ isLoggedIn }) => {
+    if (isLoggedIn) {
+        return <Navigate to="/dashboard" replace />;
+    }
+
+    return (
+        <div className="home-container">
+            <h1>Welcome to Esports Platform</h1>
+            <p>Join the ultimate esports experience today!</p>
+            <div className="home-buttons">
+                <Link to="/login">Login</Link>
+                <Link to="/signup" className="signup">Sign Up</Link>
+            </div>
+        </div>
+    );
 };
 
 function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('access_token');
         setIsLoggedIn(!!token);
     }, []);
 
@@ -111,16 +146,7 @@ function App() {
                         <div className="container">
                             <Routes>
                                 <Route path="/" element={
-                                    <div className="home-container">
-                                        <h1>Welcome to Esports Platform</h1>
-                                        <p>Join the ultimate esports experience today!</p>
-                                        {!isLoggedIn && (
-                                            <div className="home-buttons">
-                                                <Link to="/login">Login</Link>
-                                                <Link to="/signup" className="signup">Sign Up</Link>
-                                            </div>
-                                        )}
-                                    </div>
+                                    <HomeRedirect isLoggedIn={isLoggedIn} />
                                 } />
                                 <Route path="/signup" element={<Signup />} />
                                 <Route path="/login" element={<Login />} />
@@ -138,11 +164,18 @@ function App() {
                                     path="/dashboard"
                                     element={
                                         <ProtectedRoute>
-                                            <div>Dashboard (Coming Soon)</div>
+                                            <Dashboard />
                                         </ProtectedRoute>
                                     }
                                 />
-                                <Route path="/" element={<Navigate to="/login" replace />} />
+                                <Route
+                                    path="/admin"
+                                    element={
+                                        <AdminRoute>
+                                            <AdminDashboard />
+                                        </AdminRoute>
+                                    }
+                                />
                             </Routes>
                         </div>
                     </div>

@@ -1,21 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { AdminOnly } from '../components/common/RoleBasedComponent';
 import './Navbar.css';
 
 function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const { isAuthenticated, logout } = useAuth();
     const navigate = useNavigate();
 
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        setIsLoggedIn(!!token);
-    }, []);
-
     const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('userId');
-        setIsLoggedIn(false);
+        logout();
         navigate('/login');
     };
 
@@ -25,14 +20,22 @@ function Navbar() {
                 <Link to="/">Esports</Link>
             </div>
             <ul className={`navbar-links ${isOpen ? 'active' : ''}`}>
+                {isAuthenticated && <li><Link to="/dashboard">Dashboard</Link></li>}
+                <AdminOnly>
+                    <li>
+                        <Link to="/admin" style={{ color: '#f44336', fontWeight: 'bold' }}>
+                            Admin Panel
+                        </Link>
+                    </li>
+                </AdminOnly>
                 <li><Link to="/tournaments">Tournaments</Link></li>
                 <li><Link to="/events">Events</Link></li>
                 <li><Link to="/teams">Teams</Link></li>
-                <li><Link to="/profile">Profile</Link></li>
-                {isLoggedIn && <li><Link to="/create-event">Create Event</Link></li>} {/* Add this */}
+                {isAuthenticated && <li><Link to="/profile">Profile</Link></li>}
+                {isAuthenticated && <li><Link to="/create-event">Create Event</Link></li>}
             </ul>
             <div className={`navbar-logout ${isOpen ? 'active' : ''}`}>
-                {isLoggedIn && (
+                {isAuthenticated && (
                     <button onClick={handleLogout}>Logout</button>
                 )}
             </div>

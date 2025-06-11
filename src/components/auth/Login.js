@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
@@ -22,7 +22,7 @@ import {
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -30,6 +30,13 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Handle navigation after successful authentication
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -43,11 +50,10 @@ const Login = () => {
 
     try {
       const result = await login(formData.email, formData.password);
-      if (result.success) {
-        navigate('/dashboard');
-      } else {
+      if (!result.success) {
         setError(result.error);
       }
+      // Navigation is now handled by useEffect when isAuthenticated changes
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
     } finally {
