@@ -90,14 +90,11 @@ function EventDetail() {
   }, [eventId]);
 
   useEffect(() => {
-    if (event && event.participants) {
-      // Load participants whenever the event participants array changes
+    if (event) {
+      // Always load participants when event is loaded, regardless of user registration status
       loadParticipants();
-    } else if (event && event.participants && event.participants.length === 0) {
-      // Clear participants if event has no participants
-      setParticipants([]);
     }
-  }, [event?.participant_count, event?.participants?.length]);
+  }, [event?.participant_count]);
 
   const loadEvent = async () => {
     setLoading(true);
