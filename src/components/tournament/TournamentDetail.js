@@ -103,7 +103,7 @@ const generateMockBracket = (tournament, participants = []) => {
     remainingPlayers = winners + byes;
   }
   
-  console.log('Round structure for', totalParticipants, 'participants:', roundSizes);
+
   
   // Generate Round 1 matches
   const round1Matches = roundSizes[0];
@@ -150,24 +150,7 @@ const generateMockBracket = (tournament, participants = []) => {
     }
   }
 
-  console.log('Generated bracket structure:', {
-    totalParticipants,
-    totalRounds,
-    roundSizes,
-    hasFirstRoundBye: hasFirstRoundBye,
-    byeParticipant: byeParticipant?.username,
-    totalMatches: matches.length,
-    matchesByRound: matches.reduce((acc, match) => {
-      acc[match.round] = (acc[match.round] || 0) + 1;
-      return acc;
-    }, {}),
-    allMatches: matches.map(m => ({
-      id: m._id,
-      round: m.round,
-      p1: m.participant1?.username || 'null',
-      p2: m.participant2?.username || 'null'
-    }))
-  });
+
 
   return matches;
 };
@@ -245,11 +228,10 @@ function TournamentDetail() {
           }
         })
       );
-      console.log('=== Participant Details Debug ===');
-      console.log('Loaded participant details:', participantDetails);
+
       setParticipants(participantDetails);
     } catch (error) {
-      console.error('Error loading participant details:', error);
+      
       setParticipants(tournament.participants.map(id => ({ 
         id, 
         _id: id, 
@@ -274,7 +256,7 @@ function TournamentDetail() {
         setAvailableUsers(filtered);
       }
     } catch (error) {
-      console.error('Error loading users:', error);
+
       setAvailableUsers([]);
     }
   }, [tournament?.participants, tournament?.organizer_id]);
@@ -324,13 +306,7 @@ function TournamentDetail() {
     // Determine if winner goes to participant1 or participant2 slot
     const isFirstSlot = completedMatchIndex % 2 === 0;
     
-    console.log('Advancing winner to next round:', {
-      completedMatchIndex,
-      nextMatchIndex,
-      isFirstSlot,
-      winner: winnerParticipant.username,
-      nextMatch: nextMatch._id || nextMatch.id
-    });
+
     
     // Update the next round match
     return allMatches.map(match => {
@@ -369,11 +345,11 @@ function TournamentDetail() {
       if (hasParticipant1 && !hasParticipant2) {
         winnerParticipant = match.participant1;
         winnerId = match.participant1.id || match.participant1._id;
-        console.log('Auto-advancing participant1 in bye match:', match.participant1.username);
+
       } else if (!hasParticipant1 && hasParticipant2) {
         winnerParticipant = match.participant2;
         winnerId = match.participant2.id || match.participant2._id;
-        console.log('Auto-advancing participant2 in bye match:', match.participant2.username);
+
       }
       
       if (winnerParticipant && winnerId) {
@@ -386,7 +362,7 @@ function TournamentDetail() {
           );
           
           if (response.success) {
-            console.log(`Bye match ${match._id || match.id} updated successfully in database`);
+
             
             // Update the local state optimistically
             updatedMatches = updatedMatches.map(m => {
@@ -400,10 +376,10 @@ function TournamentDetail() {
             updatedMatches = advanceWinnerToNextRound(match, winnerParticipant, updatedMatches);
             
           } else {
-            console.error('Failed to update bye match in database:', response.error);
+
           }
         } catch (error) {
-          console.error('Error updating bye match:', error);
+
         }
       }
     }
@@ -418,12 +394,12 @@ function TournamentDetail() {
     try {
       // Load actual matches from backend
       const result = await tournamentService.getTournamentBrackets(tournament.id || tournament._id);
-      console.log('Backend brackets response:', result);
+
       
       if (result.success && result.data && result.data.matches && result.data.matches.length > 0) {
         // Check if matches have participant data
         const backendMatches = result.data.matches;
-        console.log('Backend matches:', backendMatches);
+
         
         // Check if backend matches already have participant details (MatchOut format)
         const hasParticipantDetails = backendMatches.some(match => 
@@ -432,20 +408,17 @@ function TournamentDetail() {
 
         if (hasParticipantDetails) {
           // Backend returned enriched matches, use them directly
-          console.log('Using backend enriched matches');
+
           // Handle any bye matches in the backend matches
           const matchesWithByes = await handleByeMatches(backendMatches);
           setMatches(matchesWithByes);
         } else {
           // Backend matches only have IDs, need to transform them
-          console.log('Transforming backend matches with participant details');
-          console.log('Available participants for transformation:', participants);
+
           
           const transformedMatches = await Promise.all(
             backendMatches.map(async (match) => {
-              console.log('Processing match:', match);
-              console.log('Match participant1_id:', match.participant1_id);
-              console.log('Match participant2_id:', match.participant2_id);
+
               
               const transformedMatch = {
                 _id: match._id || match.id,
@@ -458,13 +431,10 @@ function TournamentDetail() {
 
               // Get participant1 details
               if (match.participant1_id) {
-                console.log('Looking for participant1_id:', match.participant1_id);
                 const participant = participants.find(p => {
                   const pId = p.id || p._id;
-                  console.log('Comparing with participant ID:', pId, 'Match:', pId === match.participant1_id);
                   return pId === match.participant1_id;
                 });
-                console.log('Found participant1:', participant);
                 if (participant) {
                   transformedMatch.participant1 = {
                     _id: participant.id || participant._id,
@@ -477,13 +447,10 @@ function TournamentDetail() {
 
               // Get participant2 details
               if (match.participant2_id) {
-                console.log('Looking for participant2_id:', match.participant2_id);
                 const participant = participants.find(p => {
                   const pId = p.id || p._id;
-                  console.log('Comparing with participant ID:', pId, 'Match:', pId === match.participant2_id);
                   return pId === match.participant2_id;
                 });
-                console.log('Found participant2:', participant);
                 if (participant) {
                   transformedMatch.participant2 = {
                     _id: participant.id || participant._id,
@@ -509,12 +476,12 @@ function TournamentDetail() {
                 }
               }
 
-              console.log('Transformed match result:', transformedMatch);
+
               return transformedMatch;
             })
           );
 
-          console.log('Transformed matches:', transformedMatches);
+
           
           // Check if transformation was successful (at least first round should have participants)
           const firstRoundMatches = transformedMatches.filter(match => match.round === 1);
@@ -525,46 +492,25 @@ function TournamentDetail() {
           if (hasValidParticipants) {
             // Handle any bye matches in the transformed matches
             const matchesWithByes = await handleByeMatches(transformedMatches);
-            console.log('Final matches with byes by round:', 
-              matchesWithByes.reduce((acc, match) => {
-                const round = match.round || 1;
-                if (!acc[round]) acc[round] = [];
-                acc[round].push(match);
-                return acc;
-              }, {})
-            );
+
             setMatches(matchesWithByes);
           } else {
-            console.warn('Transformation failed, falling back to mock bracket');
             const mockMatches = generateMockBracket(tournament, participants);
-            console.log('Fallback mock matches:', mockMatches);
             // Handle any bye matches in the mock bracket
             const mockMatchesWithByes = await handleByeMatches(mockMatches);
-            console.log('Mock matches with byes by round:', 
-              mockMatchesWithByes.reduce((acc, match) => {
-                const round = match.round || 1;
-                if (!acc[round]) acc[round] = [];
-                acc[round].push(match);
-                return acc;
-              }, {})
-            );
             setMatches(mockMatchesWithByes);
           }
         }
       } else {
-        console.warn('No backend matches found, generating mock bracket');
         // Fall back to mock bracket if no backend matches or they're incomplete
         const mockMatches = generateMockBracket(tournament, participants);
-        console.log('Generated mock matches:', mockMatches);
         // Handle any bye matches in the mock bracket
         const mockMatchesWithByes = await handleByeMatches(mockMatches);
         setMatches(mockMatchesWithByes);
       }
     } catch (error) {
-      console.error('Error loading matches, falling back to mock bracket:', error);
       // Fall back to mock bracket on error
       const mockMatches = generateMockBracket(tournament, participants);
-      console.log('Fallback mock matches:', mockMatches);
       // Handle any bye matches in the fallback mock bracket
       const mockMatchesWithByes = await handleByeMatches(mockMatches);
       setMatches(mockMatchesWithByes);
@@ -577,7 +523,7 @@ function TournamentDetail() {
 
   // Function to update match result with optimistic updates and round progression
   const updateMatchResult = useCallback(async (matchId, winnerId) => {
-    console.log('updateMatchResult called with:', { matchId, winnerId });
+
     
     // First, do an optimistic update to the local state for immediate UI feedback
     let updatedMatches;
@@ -592,7 +538,7 @@ function TournamentDetail() {
             winnerParticipant = match.participant2;
           }
           
-          console.log('Optimistically updating match:', matchId, 'winner:', winnerParticipant);
+
           
           return {
             ...match,
@@ -620,22 +566,22 @@ function TournamentDetail() {
       const matchesWithByes = await handleByeMatches(updatedMatches);
       setMatches(matchesWithByes);
     } catch (error) {
-      console.error('Error handling bye matches:', error);
+
     }
 
     // Then sync with backend (but don't reload all matches to avoid overwriting the optimistic update)
     try {
       const response = await apiService.updateMatchResult(tournament.id || tournament._id, matchId, winnerId);
       if (response.success) {
-        console.log('Backend match update successful:', response);
+
         // Optionally, we could do a partial reload here, but the optimistic update should be sufficient
       } else {
-        console.error('Backend match update failed:', response.error);
+
         // If backend update fails, we might want to revert the optimistic update
         // For now, we'll just log the error
       }
     } catch (error) {
-      console.error('Error updating match result:', error);
+
       // On error, we could revert the optimistic update by reloading matches
       // await loadMatches();
     }
@@ -662,7 +608,7 @@ function TournamentDetail() {
         showSnackbar(result.error || 'Failed to start tournament', 'error');
       }
     } catch (error) {
-      console.error('Error starting tournament:', error);
+
       showSnackbar('Failed to start tournament', 'error');
     } finally {
       setActionLoading(false);
@@ -680,7 +626,7 @@ function TournamentDetail() {
         showSnackbar(result.error || 'Failed to join tournament', 'error');
       }
     } catch (error) {
-      console.error('Error joining tournament:', error);
+
       showSnackbar('Failed to join tournament', 'error');
     } finally {
       setActionLoading(false);
@@ -698,7 +644,7 @@ function TournamentDetail() {
         showSnackbar(result.error || 'Failed to leave tournament', 'error');
       }
     } catch (error) {
-      console.error('Error leaving tournament:', error);
+
       showSnackbar('Failed to leave tournament', 'error');
     } finally {
       setActionLoading(false);
@@ -712,7 +658,7 @@ function TournamentDetail() {
     try {
       // Use the correct ID field (prioritize .id which is the alias for _id)
       const userId = selectedUser.id || selectedUser._id;
-      console.log('Adding participant with ID:', userId, 'for user:', selectedUser.username);
+
       
       const result = await apiService.addTournamentParticipant(id, userId);
       if (result.success) {
@@ -724,7 +670,7 @@ function TournamentDetail() {
         showSnackbar(result.error || 'Failed to add participant', 'error');
       }
     } catch (error) {
-      console.error('Error adding participant:', error);
+
       showSnackbar('Failed to add participant', 'error');
     } finally {
       setActionLoading(false);
@@ -732,10 +678,6 @@ function TournamentDetail() {
   };
 
   const handleRemoveParticipant = async (participantId, username) => {
-    console.log('=== Frontend Remove Participant Debug ===');
-    console.log('Participant ID:', participantId);
-    console.log('Username:', username);
-    console.log('Tournament ID:', id);
     
     setActionLoading(true);
     try {
@@ -747,7 +689,7 @@ function TournamentDetail() {
         showSnackbar(result.error || 'Failed to remove participant', 'error');
       }
     } catch (error) {
-      console.error('Error removing participant:', error);
+
       showSnackbar('Failed to remove participant', 'error');
     } finally {
       setActionLoading(false);
@@ -1018,7 +960,7 @@ function TournamentDetail() {
               ) : participants.length > 0 ? (
                 <List>
                   {participants.map((participant, index) => {
-                    console.log('Participant object:', participant);
+
                     return (
                       <ListItem key={participant.id || participant._id || `participant-${index}`} divider={index < participants.length - 1}>
                         <ListItemAvatar>
@@ -1037,7 +979,7 @@ function TournamentDetail() {
                                 edge="end"
                                 onClick={() => {
                                   const userId = participant.id || participant._id;
-                                  console.log('Attempting to remove participant with ID:', userId);
+
                                   handleRemoveParticipant(userId, participant.username);
                                 }}
                                 disabled={actionLoading}

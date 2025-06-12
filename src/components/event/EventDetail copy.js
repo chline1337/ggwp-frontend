@@ -7,9 +7,12 @@ import {
   Button,
   Box,
   Alert,
+  Breadcrumbs,
+  Link,
   Grid,
   Card,
   CardContent,
+  CardActions,
   Chip,
   Divider,
   CircularProgress,
@@ -35,10 +38,15 @@ import {
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
+  Home as HomeIcon,
   Event as EventIcon,
   LocationOn as LocationIcon,
   People as PeopleIcon,
   CalendarToday as CalendarIcon,
+  Person as PersonIcon,
+  SportsEsports as GameIcon,
+  AttachMoney as MoneyIcon,
+  EmojiEvents as PrizeIcon,
   TableChart as SeatIcon,
   PersonAdd as RegisterIcon,
   PersonRemove as UnregisterIcon,
@@ -48,11 +56,11 @@ import {
   List as ListIcon,
   Payment as PaymentIcon,
   Save as SaveIcon,
+  Cancel as CancelIcon,
   RemoveCircle as RemoveParticipantIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { eventsService } from '../../services/events';
-import SeatMap from './SeatMap';
 
 function EventDetail() {
   const { eventId } = useParams();
@@ -66,9 +74,9 @@ function EventDetail() {
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [selectingSeat, setSelectingSeat] = useState(false);
-  const [skipParticipantReload, setSkipParticipantReload] = useState(false);
   const [participants, setParticipants] = useState([]);
   const [loadingParticipants, setLoadingParticipants] = useState(false);
+  const [editingPayment, setEditingPayment] = useState(null); // userId being edited
   const [updatingPayment, setUpdatingPayment] = useState(false);
   const [paymentDialog, setPaymentDialog] = useState(false);
   const [selectedParticipant, setSelectedParticipant] = useState(null);
@@ -83,12 +91,12 @@ function EventDetail() {
   const [removingParticipant, setRemovingParticipant] = useState(false);
 
   const currentUserId = user?.id || user?._id;
-  const isRegistered = event && event.participants && event.participants.includes(currentUserId);
+  const isRegistered = event && event.participants.includes(currentUserId);
   const isOrganizer = event && event.organizer_id === currentUserId;
-  const isFull = event && event.participants && event.participants.length >= event.max_participants;
+  const isFull = event && event.participants.length >= event.max_participants;
   
   // Find current user's seat assignment
-  const currentUserSeat = event && event.seatplan && event.seatplan.assignments && event.seatplan.assignments.find(
+  const currentUserSeat = event && event.seatplan.assignments.find(
     assignment => assignment.user_id === currentUserId
   );
 
@@ -97,13 +105,10 @@ function EventDetail() {
   }, [eventId]);
 
   useEffect(() => {
-    if (event && event.participants && event.participants.length > 0 && !skipParticipantReload) {
-      // Only load participants if we don't have them yet or it's not a seat operation
-      if (participants.length === 0) {
-        loadParticipants();
-      }
+    if (event && event.participants.length > 0) {
+      loadParticipants();
     }
-  }, [event, skipParticipantReload]);
+  }, [event]);
 
   const loadEvent = async () => {
     setLoading(true);
@@ -124,37 +129,28 @@ function EventDetail() {
     }
   };
 
-  const loadParticipants = async (eventData = null) => {
+  const loadParticipants = async () => {
     setLoadingParticipants(true);
     
     try {
       const result = await eventsService.getEventParticipants(eventId);
       if (result.success) {
-        // Use passed eventData or current event state for seat assignment lookup
-        const currentEvent = eventData || event;
-        
         // Transform backend data to include seat assignments
         const participantDetails = result.data.map(participant => ({
           ...participant,
           id: participant.user_id,
-          seat_assignment: currentEvent && currentEvent.seatplan && currentEvent.seatplan.assignments && currentEvent.seatplan.assignments.find(
+          seat_assignment: event.seatplan.assignments.find(
             assignment => assignment.user_id === participant.user_id
           )
         }));
         setParticipants(participantDetails);
       } else {
         console.error('Failed to load participants:', result.error);
-        // Don't clear participants on error during seat operations to avoid flickering
-        if (!eventData) {
-          setParticipants([]);
-        }
+        // Don't set error for participants as it's not critical
       }
     } catch (err) {
       console.error('Error loading participants:', err);
-      // Don't clear participants on error during seat operations to avoid flickering
-      if (!eventData) {
-        setParticipants([]);
-      }
+      // Don't set error for participants as it's not critical
     } finally {
       setLoadingParticipants(false);
     }
@@ -214,27 +210,16 @@ function EventDetail() {
   };
 
   const handleSeatSelect = async (row, column) => {
+    if (!isRegistered || selectingSeat) return;
+    
     setSelectingSeat(true);
-    setSkipParticipantReload(true); // Prevent automatic participant reload
+    setError(null);
+    
     try {
       const result = await eventsService.assignSeat(eventId, row, column);
       if (result.success) {
-        // Update the event state with the new data
-        setEvent(result.data);
-        
-        // Update participants with new seat assignments if we have participants loaded
-        if (participants.length > 0) {
-          const updatedParticipants = participants.map(participant => ({
-            ...participant,
-            seat_assignment: result.data.seatplan && result.data.seatplan.assignments && result.data.seatplan.assignments.find(
-              assignment => assignment.user_id === participant.user_id
-            )
-          }));
-          setParticipants(updatedParticipants);
-        }
-        
-        // Clear any previous errors
-        setError(null);
+        // Reload event data to get updated seat assignments
+        await loadEvent();
       } else {
         setError(result.error);
       }
@@ -243,41 +228,28 @@ function EventDetail() {
       setError('Failed to select seat');
     } finally {
       setSelectingSeat(false);
-      setSkipParticipantReload(false); // Re-enable participant reload
     }
   };
 
   const handleSeatRemove = async () => {
+    if (!isRegistered || !currentUserSeat || selectingSeat) return;
+    
     setSelectingSeat(true);
-    setSkipParticipantReload(true); // Prevent automatic participant reload
+    setError(null);
+    
     try {
       const result = await eventsService.removeSeatAssignment(eventId);
       if (result.success) {
-        // Update the event state with the new data
-        setEvent(result.data);
-        
-        // Update participants with new seat assignments if we have participants loaded
-        if (participants.length > 0) {
-          const updatedParticipants = participants.map(participant => ({
-            ...participant,
-            seat_assignment: result.data.seatplan && result.data.seatplan.assignments && result.data.seatplan.assignments.find(
-              assignment => assignment.user_id === participant.user_id
-            )
-          }));
-          setParticipants(updatedParticipants);
-        }
-        
-        // Clear any previous errors
-        setError(null);
+        // Reload event data to get updated seat assignments
+        await loadEvent();
       } else {
         setError(result.error);
       }
     } catch (err) {
       console.error('Error removing seat:', err);
-      setError('Failed to remove seat');
+      setError('Failed to remove seat assignment');
     } finally {
       setSelectingSeat(false);
-      setSkipParticipantReload(false); // Re-enable participant reload
     }
   };
 
@@ -293,7 +265,7 @@ function EventDetail() {
 
   const handlePaymentUpdate = async () => {
     if (!selectedParticipant) return;
-    
+
     setUpdatingPayment(true);
     try {
       const paymentData = {
@@ -304,28 +276,18 @@ function EventDetail() {
         payment_amount: paymentFormData.payment_amount ? parseFloat(paymentFormData.payment_amount) : null
       };
 
-      const result = await eventsService.updatePaymentStatus(
-        eventId, 
-        selectedParticipant.user_id, 
-        paymentData
-      );
+      const result = await eventsService.updatePaymentStatus(eventId, selectedParticipant.user_id, paymentData);
       
       if (result.success) {
-        setPaymentDialog(false);
-        setSelectedParticipant(null);
-        setPaymentFormData({
-          payment_status: 'pending',
-          payment_method: '',
-          payment_amount: ''
-        });
-        
         // Reload participants to get updated data
         await loadParticipants();
+        setPaymentDialog(false);
+        setSelectedParticipant(null);
       } else {
         setError(result.error);
       }
     } catch (err) {
-      console.error('Error updating payment:', err);
+      console.error('Error updating payment status:', err);
       setError('Failed to update payment status');
     } finally {
       setUpdatingPayment(false);
@@ -333,23 +295,16 @@ function EventDetail() {
   };
 
   const handleQuickPaymentToggle = async (participant) => {
-    const newStatus = participant.payment_status === 'paid' ? 'pending' : 'paid';
-    
     setUpdatingPayment(true);
     try {
+      const newStatus = participant.payment_status === 'paid' ? 'pending' : 'paid';
       const paymentData = {
         user_id: participant.user_id,
         payment_status: newStatus,
-        payment_date: newStatus === 'paid' ? new Date().toISOString() : null,
-        payment_method: participant.payment_method || null,
-        payment_amount: participant.payment_amount || null
+        payment_date: newStatus === 'paid' ? new Date().toISOString() : null
       };
 
-      const result = await eventsService.updatePaymentStatus(
-        eventId, 
-        participant.user_id, 
-        paymentData
-      );
+      const result = await eventsService.updatePaymentStatus(eventId, participant.user_id, paymentData);
       
       if (result.success) {
         // Reload participants to get updated data
@@ -358,7 +313,7 @@ function EventDetail() {
         setError(result.error);
       }
     } catch (err) {
-      console.error('Error updating payment:', err);
+      console.error('Error updating payment status:', err);
       setError('Failed to update payment status');
     } finally {
       setUpdatingPayment(false);
@@ -369,16 +324,13 @@ function EventDetail() {
     if (!participantToRemove) return;
     
     setRemovingParticipant(true);
+    setRemoveParticipantDialog(false);
+    
     try {
       const result = await eventsService.removeEventParticipant(eventId, participantToRemove.user_id);
-      
       if (result.success) {
-        setRemoveParticipantDialog(false);
-        setParticipantToRemove(null);
-        
-        // Reload event and participants data
-        await loadEvent();
-        await loadParticipants();
+        await loadEvent(); // Reload event data
+        await loadParticipants(); // Reload participants
       } else {
         setError(result.error);
       }
@@ -387,26 +339,27 @@ function EventDetail() {
       setError('Failed to remove participant');
     } finally {
       setRemovingParticipant(false);
+      setParticipantToRemove(null);
     }
   };
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const options = { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric', 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    };
-    return date.toLocaleDateString('en-US', options);
+    return new Date(dateString).toLocaleString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'open': return 'success';
-      case 'closed': return 'error';
-      case 'full': return 'warning';
+      case 'upcoming': return 'primary';
+      case 'ongoing': return 'warning';
+      case 'completed': return 'success';
+      case 'cancelled': return 'error';
       default: return 'default';
     }
   };
@@ -562,11 +515,8 @@ function EventDetail() {
                   Available Seats
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                  {event.seatplan && event.seatplan.assignments ? 
-                    (event.seatplan.rows * event.seatplan.columns) - event.seatplan.assignments.length :
-                    event.seatplan ? event.seatplan.rows * event.seatplan.columns : 0
-                  }
-                  {event.seatplan ? ` / ${event.seatplan.rows * event.seatplan.columns}` : ' / 0'}
+                  {(event.seatplan.rows * event.seatplan.columns) - event.seatplan.assignments.length}
+                  {` / ${event.seatplan.rows * event.seatplan.columns}`}
                 </Typography>
               </Box>
             </Box>
@@ -584,9 +534,374 @@ function EventDetail() {
       <Grid container spacing={4}>
         {/* Main Content */}
         <Grid item xs={12} md={8}>
+          {/* Participants Section */}
+          <Card sx={{ mb: 4 }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                  Participants ({participants.length})
+                </Typography>
+              </Box>
+
+              {loadingParticipants ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+                  <CircularProgress />
+                </Box>
+              ) : participants.length > 0 ? (
+                <List>
+                  {participants.map((participant, index) => {
+                    const hasSeatedAssignment = event.seatplan.assignments.find(
+                      assignment => assignment.user_id === participant.user_id
+                    );
+
+                    return (
+                      <ListItem key={participant.user_id || `participant-${index}`} divider={index < participants.length - 1}>
+                        <ListItemAvatar>
+                          <Avatar sx={{ bgcolor: 'primary.main' }}>
+                            <PersonIcon />
+                          </Avatar>
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Typography variant="subtitle1">
+                                {participant.username || 'Unknown User'}
+                              </Typography>
+                              {hasSeatedAssignment && (
+                                <Chip 
+                                  size="small" 
+                                  label={`Seat ${hasSeatedAssignment.row}-${hasSeatedAssignment.column}`}
+                                  color="primary"
+                                  variant="outlined"
+                                />
+                              )}
+                              <Chip 
+                                size="small"
+                                label={participant.payment_status || 'pending'}
+                                color={participant.payment_status === 'paid' ? 'success' : 'warning'}
+                              />
+                            </Box>
+                          }
+                          secondary={
+                            <Box>
+                              <Typography variant="body2" color="text.secondary">
+                                {participant.email || `User ID: ${participant.user_id}`}
+                              </Typography>
+                              {participant.registered_at && (
+                                <Typography variant="caption" color="text.secondary">
+                                  Registered: {new Date(participant.registered_at).toLocaleDateString()}
+                                </Typography>
+                              )}
+                            </Box>
+                          }
+                        />
+                        {isOrganizer && (
+                          <ListItemSecondaryAction>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              <Tooltip title="Edit Payment">
+                                <IconButton
+                                  edge="end"
+                                  onClick={() => handlePaymentEdit(participant)}
+                                  disabled={updatingPayment}
+                                >
+                                  <PaymentIcon />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Remove participant">
+                                <IconButton
+                                  edge="end"
+                                  color="error"
+                                  onClick={() => {
+                                    setParticipantToRemove(participant);
+                                    setRemoveParticipantDialog(true);
+                                  }}
+                                  disabled={removingParticipant}
+                                >
+                                  <RemoveParticipantIcon />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          </ListItemSecondaryAction>
+                        )}
+                      </ListItem>
+                    );
+                  })}
+                </List>
+              ) : (
+                <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
+                  No participants yet. Be the first to register!
+                </Typography>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Seatplan */}
+          <Card>
+            <CardContent>
+              <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>
+                Seatplan ({event.seatplan.rows} × {event.seatplan.columns})
+              </Typography>
+            
+            {isRegistered ? (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Click on an available seat to select it. Your current seat will be highlighted.
+                </Typography>
+                {currentUserSeat && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Typography variant="body2" color="primary">
+                      Your seat: {currentUserSeat.row}-{currentUserSeat.column}
+                    </Typography>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="error"
+                      onClick={handleSeatRemove}
+                      disabled={selectingSeat}
+                    >
+                      Remove
+                    </Button>
+                  </Box>
+                )}
+                {selectingSeat && (
+                  <Typography variant="body2" color="text.secondary">
+                    Updating seat assignment...
+                  </Typography>
+                )}
+              </Box>
+            ) : (
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Register for the event to select a seat.
+              </Typography>
+            )}
+
+            {/* Seatplan grid */}
+            <Box sx={{ 
+              display: 'grid', 
+              gridTemplateColumns: `repeat(${event.seatplan.columns}, 1fr)`,
+              gap: 1,
+              maxWidth: '400px'
+            }}>
+              {Array.from({ length: event.seatplan.rows * event.seatplan.columns }, (_, index) => {
+                const row = Math.floor(index / event.seatplan.columns) + 1;
+                const col = (index % event.seatplan.columns) + 1;
+                const assignment = event.seatplan.assignments.find(
+                  assignment => assignment.row === row && assignment.column === col
+                );
+                const isAssigned = !!assignment;
+                const isCurrentUserSeat = assignment && assignment.user_id === currentUserId;
+                
+                let buttonVariant, buttonColor;
+                if (isCurrentUserSeat) {
+                  buttonVariant = "contained";
+                  buttonColor = "primary";
+                } else if (isAssigned) {
+                  buttonVariant = "contained";
+                  buttonColor = "inherit";
+                } else {
+                  buttonVariant = "outlined";
+                  buttonColor = "primary";
+                }
+                
+                return (
+                  <Button
+                    key={index}
+                    variant={buttonVariant}
+                    color={buttonColor}
+                    size="small"
+                    disabled={!isRegistered || (isAssigned && !isCurrentUserSeat) || selectingSeat}
+                    onClick={() => handleSeatSelect(row, col)}
+                    sx={{ 
+                      minWidth: '40px', 
+                      height: '40px',
+                      fontSize: '0.75rem',
+                      ...(isAssigned && !isCurrentUserSeat && {
+                        backgroundColor: 'grey.400',
+                        color: 'white',
+                        '&:hover': {
+                          backgroundColor: 'grey.400'
+                        }
+                      })
+                    }}
+                  >
+                    {row}-{col}
+                  </Button>
+                );
+              })}
+            </Box>
+
+            {/* Seat legend */}
+            <Box sx={{ display: 'flex', gap: 2, mt: 2, flexWrap: 'wrap' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Box sx={{ 
+                  width: 16, 
+                  height: 16, 
+                  backgroundColor: 'primary.main', 
+                  borderRadius: 0.5 
+                }} />
+                <Typography variant="caption">Your seat</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Box sx={{ 
+                  width: 16, 
+                  height: 16, 
+                  backgroundColor: 'grey.400', 
+                  borderRadius: 0.5 
+                }} />
+                <Typography variant="caption">Occupied</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Box sx={{ 
+                  width: 16, 
+                  height: 16, 
+                  border: '1px solid', 
+                  borderColor: 'primary.main', 
+                  borderRadius: 0.5 
+                }} />
+                <Typography variant="caption">Available</Typography>
+              </Box>
+            </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Sidebar */}
+        <Grid item xs={12} md={4}>
+          {/* Registration Card */}
+          <Card sx={{ mb: 3 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                <PeopleIcon sx={{ mr: 1 }} />
+                Registration
+              </Typography>
+              
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Participants
+                </Typography>
+                <Typography variant="h6">
+                  {event.participant_count} / {event.max_participants}
+                </Typography>
+              </Box>
+
+              {user ? (
+                <Box>
+                  {isRegistered ? (
+                    <Box>
+                      <Alert severity="success" sx={{ mb: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <CheckIcon sx={{ mr: 1 }} />
+                          You are registered for this event
+                        </Box>
+                      </Alert>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        fullWidth
+                        startIcon={<UnregisterIcon />}
+                        onClick={() => setUnregisterDialog(true)}
+                        disabled={registering}
+                      >
+                        Unregister
+                      </Button>
+                    </Box>
+                  ) : (
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      startIcon={<RegisterIcon />}
+                      onClick={handleRegister}
+                      disabled={registering || isFull}
+                    >
+                      {registering ? 'Registering...' : isFull ? 'Event Full' : 'Register'}
+                    </Button>
+                  )}
+                </Box>
+              ) : (
+                <Alert severity="info">
+                  Please log in to register for this event
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Event Stats */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Event Statistics
+              </Typography>
+              
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Total Seats:
+                </Typography>
+                <Typography variant="body2">
+                  {event.seatplan.rows * event.seatplan.columns}
+                </Typography>
+              </Box>
+              
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Assigned Seats:
+                </Typography>
+                <Typography variant="body2">
+                  {event.seatplan.assignments.length}
+                </Typography>
+              </Box>
+              
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Available Seats:
+                </Typography>
+                <Typography variant="body2">
+                  {(event.seatplan.rows * event.seatplan.columns) - event.seatplan.assignments.length}
+                </Typography>
+              </Box>
+
+              {participants.length > 0 && (
+                <>
+                  <Divider sx={{ my: 2 }} />
+                  <Typography variant="subtitle2" gutterBottom>
+                    Payment Status
+                  </Typography>
+                  
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Paid:
+                    </Typography>
+                    <Typography variant="body2" color="success.main">
+                      {participants.filter(p => p.payment_status === 'paid').length}
+                    </Typography>
+                  </Box>
+                  
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Pending:
+                    </Typography>
+                    <Typography variant="body2" color="warning.main">
+                      {participants.filter(p => p.payment_status === 'pending').length}
+                    </Typography>
+                  </Box>
+                  
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Payment Rate:
+                    </Typography>
+                    <Typography variant="body2">
+                      {participants.length > 0 
+                        ? Math.round((participants.filter(p => p.payment_status === 'paid').length / participants.length) * 100)
+                        : 0}%
+                    </Typography>
+                  </Box>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Participants List */}
           {(isOrganizer || participants.length > 0) && (
-            <Paper elevation={3} sx={{ p: 3 }}>
+            <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
                   <ListIcon sx={{ mr: 1 }} />
@@ -680,27 +995,13 @@ function EventDetail() {
                       />
                       {isOrganizer && (
                         <ListItemSecondaryAction>
-                          <Tooltip title="Edit Payment">
+                          <Tooltip title="Edit Payment Details">
                             <IconButton 
                               edge="end" 
                               onClick={() => handlePaymentEdit(participant)}
                               disabled={updatingPayment}
                             >
                               <PaymentIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Remove participant">
-                            <IconButton 
-                              edge="end" 
-                              onClick={() => {
-                                setParticipantToRemove(participant);
-                                setRemoveParticipantDialog(true);
-                              }}
-                              disabled={removingParticipant}
-                              color="error"
-                              sx={{ ml: 1 }}
-                            >
-                              <RemoveParticipantIcon />
                             </IconButton>
                           </Tooltip>
                         </ListItemSecondaryAction>
@@ -711,17 +1012,6 @@ function EventDetail() {
               )}
             </Paper>
           )}
-
-          {/* Seat Map */}
-          <SeatMap
-            event={event}
-            currentUserId={currentUserId}
-            currentUserSeat={currentUserSeat}
-            isRegistered={isRegistered}
-            selectingSeat={selectingSeat}
-            onSeatSelect={handleSeatSelect}
-            onSeatRemove={handleSeatRemove}
-          />
         </Grid>
 
         {/* Sidebar */}
@@ -747,12 +1037,11 @@ function EventDetail() {
                 <Box>
                   {isRegistered ? (
                     <Box>
-                      <Alert 
-                        severity="success" 
-                        sx={{ mb: 2, display: 'flex', alignItems: 'center' }}
-                        icon={<CheckIcon />}
-                      >
-                        You are registered for this event
+                      <Alert severity="success" sx={{ mb: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <CheckIcon sx={{ mr: 1 }} />
+                          You are registered for this event
+                        </Box>
                       </Alert>
                       <Button
                         variant="outlined"
@@ -797,7 +1086,7 @@ function EventDetail() {
                   Total Seats:
                 </Typography>
                 <Typography variant="body2">
-                  {event.seatplan ? event.seatplan.rows * event.seatplan.columns : 0}
+                  {event.seatplan.rows * event.seatplan.columns}
                 </Typography>
               </Box>
               
@@ -806,7 +1095,7 @@ function EventDetail() {
                   Assigned Seats:
                 </Typography>
                 <Typography variant="body2">
-                  {event.seatplan && event.seatplan.assignments ? event.seatplan.assignments.length : 0}
+                  {event.seatplan.assignments.length}
                 </Typography>
               </Box>
               
@@ -815,10 +1104,7 @@ function EventDetail() {
                   Available Seats:
                 </Typography>
                 <Typography variant="body2">
-                  {event.seatplan && event.seatplan.assignments ? 
-                    (event.seatplan.rows * event.seatplan.columns) - event.seatplan.assignments.length :
-                    event.seatplan ? event.seatplan.rows * event.seatplan.columns : 0
-                  }
+                  {(event.seatplan.rows * event.seatplan.columns) - event.seatplan.assignments.length}
                 </Typography>
               </Box>
             </CardContent>
@@ -977,13 +1263,15 @@ function EventDetail() {
           </Box>
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body1" sx={{ mb: 2 }}>
+          <Typography paragraph>
             Are you sure you want to unregister from this event?
           </Typography>
           {currentUserSeat && (
             <Alert severity="warning" sx={{ mb: 2 }}>
-              <strong>Note:</strong> You currently have seat {currentUserSeat.row}-{currentUserSeat.column} assigned. 
-              Unregistering will automatically remove your seat assignment and make it available for other participants.
+              <Typography variant="body2">
+                <strong>Note:</strong> You currently have seat {currentUserSeat.row}-{currentUserSeat.column} assigned. 
+                Unregistering will automatically remove your seat assignment and make it available for other participants.
+              </Typography>
             </Alert>
           )}
           <Typography variant="body2" color="text.secondary">
@@ -1020,12 +1308,14 @@ function EventDetail() {
         <DialogContent>
           {participantToRemove && (
             <Box>
-              <Typography variant="body1" sx={{ mb: 2 }}>
+              <Typography paragraph>
                 Are you sure you want to remove <strong>{participantToRemove.username}</strong> from this event?
               </Typography>
               <Alert severity="warning" sx={{ mb: 2 }}>
-                This will remove the participant from the event and automatically free up their seat assignment if they have one.
-                They will need to register again if they want to rejoin.
+                <Typography variant="body2">
+                  This will remove the participant from the event and automatically free up their seat assignment if they have one.
+                  They will need to register again if they want to rejoin.
+                </Typography>
               </Alert>
               <Typography variant="body2" color="text.secondary">
                 This action cannot be undone.

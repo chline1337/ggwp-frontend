@@ -76,7 +76,7 @@ function Navbar() {
     <Box sx={{ width: 250 }} role="presentation">
       <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
-          GGWP Esports
+          OC-LANgenthal
         </Typography>
         {isAuthenticated && user && (
           <Box 
@@ -220,7 +220,7 @@ function Navbar() {
               }
             }}
           >
-            GGWP Esports
+            OC-LANgenthal
           </Typography>
 
           {/* Desktop Navigation */}

@@ -183,7 +183,7 @@ export const eventsService = {
       return {
         success: true,
         data: response.data,
-        message: response.data.message || 'Seat assigned successfully'
+        message: 'Seat assigned successfully'
       };
     } catch (error) {
       console.error('Assign seat error:', error);
@@ -207,7 +207,7 @@ export const eventsService = {
       return {
         success: true,
         data: response.data,
-        message: response.data.message || 'Seat assignment removed successfully'
+        message: 'Seat assignment removed successfully'
       };
     } catch (error) {
       console.error('Remove seat assignment error:', error);
@@ -216,6 +216,32 @@ export const eventsService = {
         errorMessage = typeof error.response.data.detail === 'string' 
           ? error.response.data.detail 
           : 'Failed to remove seat assignment';
+      }
+      return {
+        success: false,
+        error: errorMessage
+      };
+    }
+  },
+
+  // Remove participant from event (organizer only)
+  removeEventParticipant: async (eventId, userId) => {
+    try {
+      const response = await api.delete(`/api/events/${eventId}/participants/admin`, {
+        data: { user_id: userId }
+      });
+      return {
+        success: true,
+        data: response.data,
+        message: response.data.message || 'Participant removed successfully'
+      };
+    } catch (error) {
+      console.error('Remove event participant error:', error);
+      let errorMessage = 'Failed to remove participant';
+      if (error.response?.data?.detail) {
+        errorMessage = typeof error.response.data.detail === 'string' 
+          ? error.response.data.detail 
+          : 'Failed to remove participant';
       }
       return {
         success: false,
