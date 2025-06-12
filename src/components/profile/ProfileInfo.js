@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTwitch, faTwitter, faDiscord } from '@fortawesome/free-brands-svg-icons';
 
 function ProfileInfo({ username, email, avatar, bio, socialLinks }) {
-    const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    const baseUrl = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
     const avatarUrl = avatar ? `${baseUrl}${avatar}` : null;
 
     const platformIcons = {

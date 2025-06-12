@@ -12,7 +12,7 @@ function AddTeamForm({ tournamentId, allTeams, refreshTournament }) {
         }
         const token = localStorage.getItem('token');
         try {
-            await axios.post(`${process.env.REACT_APP_API_URL}/api/tournament/signup`, {
+            await axios.post(`${process.env.REACT_APP_API_URL}/api/tournaments/${tournamentId}/participants`, {
                 tournamentId,
                 teamId: selectedTeamId,
             }, {

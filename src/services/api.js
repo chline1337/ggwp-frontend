@@ -234,6 +234,91 @@ export const apiService = {
         }
       };
     }
+  },
+
+  // User methods (alias for getUserById for consistency)
+  getUser: async (userId) => {
+    try {
+      const response = await api.get(`/api/users/${userId}`);
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error) {
+      console.error('Get user error:', error);
+      return {
+        success: false,
+        error: 'Failed to load user details',
+        data: null
+      };
+    }
+  },
+
+  // Tournament participant management (Organizer only)
+  addTournamentParticipant: async (tournamentId, userId) => {
+    try {
+      console.log('=== Add Tournament Participant Debug ===');
+      console.log('Tournament ID:', tournamentId);
+      console.log('User ID:', userId);
+      console.log('Request URL:', `/api/tournaments/${tournamentId}/participants/admin`);
+      console.log('Request payload:', { user_id: userId });
+      
+      // This endpoint allows organizers to add participants directly
+      const response = await api.post(`/api/tournaments/${tournamentId}/participants/admin`, {
+        user_id: userId
+      });
+      return {
+        success: true,
+        data: response.data,
+        message: 'Participant added successfully'
+      };
+    } catch (error) {
+      console.error('Add tournament participant error:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      let errorMessage = 'Failed to add participant';
+      if (error.response?.data?.detail) {
+        errorMessage = typeof error.response.data.detail === 'string' 
+          ? error.response.data.detail 
+          : 'Failed to add participant';
+      }
+      return {
+        success: false,
+        error: errorMessage
+      };
+    }
+  },
+
+  removeTournamentParticipant: async (tournamentId, userId) => {
+    try {
+      console.log('=== Remove Participant Debug ===');
+      console.log('Tournament ID:', tournamentId);
+      console.log('User ID to remove:', userId);
+      console.log('Request payload:', { user_id: userId });
+      
+      // This endpoint allows organizers to remove participants directly
+      const response = await api.delete(`/api/tournaments/${tournamentId}/participants/admin`, {
+        data: { user_id: userId }
+      });
+      return {
+        success: true,
+        data: response.data,
+        message: 'Participant removed successfully'
+      };
+    } catch (error) {
+      console.error('Remove tournament participant error:', error);
+      console.error('Error response:', error.response?.data);
+      let errorMessage = 'Failed to remove participant';
+      if (error.response?.data?.detail) {
+        errorMessage = typeof error.response.data.detail === 'string' 
+          ? error.response.data.detail 
+          : 'Failed to remove participant';
+      }
+      return {
+        success: false,
+        error: errorMessage
+      };
+    }
   }
 };
 

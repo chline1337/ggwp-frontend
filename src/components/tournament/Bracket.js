@@ -9,7 +9,7 @@ function Bracket({ tournament, isOrganizer, refreshTournament }) {
         const token = localStorage.getItem('token');
         console.log('Updating result:', { tournamentId: tournament._id, matchId, winnerId, token });
         try {
-            const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/tournament/result`, {
+            const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/tournaments/result`, {
                 tournamentId: tournament._id,
                 matchId,
                 winnerId

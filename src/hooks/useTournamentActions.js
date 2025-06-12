@@ -1,69 +1,214 @@
 // src/hooks/useTournamentActions.js
 import { useState, useCallback } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { tournamentService } from '../services/tournaments';
 
 const useTournamentActions = () => {
     const [tournaments, setTournaments] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
 
     const fetchTournaments = useCallback(async () => {
-        const token = localStorage.getItem('token');
-        console.log('Fetching tournaments, token:', token);
-        if (!token) {
-            console.log('No token, navigating to /login');
-            navigate('/login');
-            return;
-        }
         try {
             setLoading(true);
-            console.log('Making API call to /api/tournament');
-            const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/tournament`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            console.log('API response:', res.data);
-            setTournaments(res.data);
+            setError(null);
+            
+            const result = await tournamentService.getTournaments();
+            
+            if (result.success) {
+                setTournaments(result.data);
+            } else {
+                setError(result.error);
+                setTournaments([]);
+            }
         } catch (err) {
-            console.error('Error fetching tournaments:', err.response?.data.msg || err.message);
-            alert(err.response?.data.msg || 'Error fetching tournaments');
+            console.error('Error fetching tournaments:', err);
+            setError('Unexpected error occurred while loading tournaments');
+            setTournaments([]);
         } finally {
-            console.log('Setting loading to false');
             setLoading(false);
         }
-    }, [navigate]); // Keep navigate here as it’s used in the function
+    }, []);
 
-    const createTournament = async (formData) => {
-        const token = localStorage.getItem('token');
+    const createTournament = useCallback(async (tournamentData) => {
         try {
-            await axios.post(`${process.env.REACT_APP_API_URL}/api/tournament/create`, formData, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            alert('Tournament created');
-            navigate('/tournaments');
+            const result = await tournamentService.createTournament(tournamentData);
+            
+            if (result.success) {
+                // Refresh tournaments list
+                await fetchTournaments();
+                navigate('/tournaments');
+                return result;
+            } else {
+                throw new Error(result.error);
+            }
         } catch (err) {
-            alert(err.response?.data.msg || 'Failed to create tournament');
+            console.error('Error creating tournament:', err);
+            throw err;
         }
-    };
+    }, [fetchTournaments, navigate]);
+
+    const updateTournament = useCallback(async (tournamentId, tournamentData) => {
+        try {
+            const result = await tournamentService.updateTournament(tournamentId, tournamentData);
+            
+            if (result.success) {
+                // Update local tournaments state
+                setTournaments(prev => 
+                    prev.map(tournament => 
+                        tournament._id === tournamentId ? result.data : tournament
+                    )
+                );
+                return result;
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (err) {
+            console.error('Error updating tournament:', err);
+            throw err;
+        }
+    }, []);
+
+    const deleteTournament = useCallback(async (tournamentId) => {
+        try {
+            const result = await tournamentService.deleteTournament(tournamentId);
+            
+            if (result.success) {
+                // Remove tournament from local state
+                setTournaments(prev => 
+                    prev.filter(tournament => tournament._id !== tournamentId)
+                );
+                return result;
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (err) {
+            console.error('Error deleting tournament:', err);
+            throw err;
+        }
+    }, []);
 
     const startTournament = useCallback(async (tournamentId) => {
-        const token = localStorage.getItem('token');
-        console.log('Starting tournament, ID:', tournamentId, 'Token:', token);
         try {
-            await axios.post(`${process.env.REACT_APP_API_URL}/api/tournament/start`, { tournamentId }, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            console.log('Tournament started successfully');
-            alert('Tournament started');
-            return true;
+            const result = await tournamentService.startTournament(tournamentId);
+            
+            if (result.success) {
+                // Update tournament status in local state
+                setTournaments(prev => 
+                    prev.map(tournament => 
+                        tournament._id === tournamentId 
+                            ? { ...tournament, status: 'ongoing' } 
+                            : tournament
+                    )
+                );
+                return result;
+            } else {
+                throw new Error(result.error);
+            }
         } catch (err) {
-            console.error('Error starting tournament:', err.response?.data.msg || err.message);
-            alert(err.response?.data.msg || 'Failed to start tournament');
-            return false;
+            console.error('Error starting tournament:', err);
+            throw err;
         }
-    }, []); // Removed navigate from dependencies as it’s stable
+    }, []);
 
-    return { tournaments, loading, fetchTournaments, createTournament, startTournament };
+    const joinTournament = useCallback(async (tournamentId, participantData = {}) => {
+        try {
+            const result = await tournamentService.joinTournament(tournamentId, participantData);
+            
+            if (result.success) {
+                // Refresh tournaments to get updated participant data
+                await fetchTournaments();
+                return result;
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (err) {
+            console.error('Error joining tournament:', err);
+            throw err;
+        }
+    }, [fetchTournaments]);
+
+    const leaveTournament = useCallback(async (tournamentId) => {
+        try {
+            const result = await tournamentService.leaveTournament(tournamentId);
+            
+            if (result.success) {
+                // Refresh tournaments to get updated participant data
+                await fetchTournaments();
+                return result;
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (err) {
+            console.error('Error leaving tournament:', err);
+            throw err;
+        }
+    }, [fetchTournaments]);
+
+    const getTournament = useCallback(async (tournamentId) => {
+        try {
+            const result = await tournamentService.getTournament(tournamentId);
+            
+            if (result.success) {
+                return result.data;
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (err) {
+            console.error('Error getting tournament:', err);
+            throw err;
+        }
+    }, []);
+
+    const getTournamentParticipants = useCallback(async (tournamentId) => {
+        try {
+            const result = await tournamentService.getTournamentParticipants(tournamentId);
+            
+            if (result.success) {
+                return result.data;
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (err) {
+            console.error('Error getting tournament participants:', err);
+            throw err;
+        }
+    }, []);
+
+    const getTournamentBrackets = useCallback(async (tournamentId) => {
+        try {
+            const result = await tournamentService.getTournamentBrackets(tournamentId);
+            
+            if (result.success) {
+                return result.data;
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (err) {
+            console.error('Error getting tournament brackets:', err);
+            throw err;
+        }
+    }, []);
+
+    return {
+        // State
+        tournaments,
+        loading,
+        error,
+        
+        // Actions
+        fetchTournaments,
+        createTournament,
+        updateTournament,
+        deleteTournament,
+        startTournament,
+        joinTournament,
+        leaveTournament,
+        getTournament,
+        getTournamentParticipants,
+        getTournamentBrackets
+    };
 };
 
 export default useTournamentActions;

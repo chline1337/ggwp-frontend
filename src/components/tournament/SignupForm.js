@@ -17,7 +17,7 @@ function SignupForm({ tournament, refreshTournament }) {
         const token = localStorage.getItem('token');
         try {
             const payload = isTeam ? { tournamentId: tournament._id, teamId: signupForm.teamId } : { tournamentId: tournament._id };
-            await axios.post(`${process.env.REACT_APP_API_URL}/api/tournament/signup`, payload, {
+            await axios.post(`${process.env.REACT_APP_API_URL}/api/tournaments/${tournament._id}/participants`, payload, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             alert('Signed up successfully');
