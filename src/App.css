@@ -2,62 +2,6 @@
     background: var(--background-color);
 }
 
-.home-container {
-    display: grid;
-    place-items: center;
-    padding: 20px 0;
-}
-    /* Rest unchanged */
-
-    .home-container h1 {
-        font-size: 48px;
-        font-weight: 900;
-        background: var(--gradient);
-        -webkit-background-clip: text;
-        color: transparent;
-        margin-bottom: 20px;
-        letter-spacing: 1px;
-        animation: fadeIn 1s ease-in-out;
-    }
-
-    .home-container p {
-        font-size: 20px;
-        color: #bbb;
-        margin-bottom: 30px;
-    }
-
-.home-buttons {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-}
-
-    .home-buttons a {
-        display: inline-block;
-        padding: 14px 30px;
-        background: var(--secondary-color);
-        color: var(--text-color);
-        border-radius: 25px;
-        font-size: 18px;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-        text-decoration: none;
-        transition: background-color 0.3s ease, transform 0.2s ease;
-    }
-
-        .home-buttons a:hover {
-            background: #0D8CE0;
-            transform: scale(1.02);
-        }
-
-        .home-buttons a.signup {
-            background: var(--primary-color);
-        }
-
-            .home-buttons a.signup:hover {
-                background: #FF6F00;
-            }
-
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -70,32 +14,9 @@
     }
 }
 
+/* Media queries for general app styles */
 @media (max-width: 768px) {
-    .home-container h1 {
-        font-size: 36px;
-    }
-
-    .home-container p {
-        font-size: 18px;
-    }
-
-    .home-buttons {
-        flex-direction: column;
-        gap: 15px;
-    }
-}
-
-@media (max-width: 480px) {
-    .home-container h1 {
-        font-size: 28px;
-    }
-
-    .home-container p {
-        font-size: 16px;
-    }
-
-    .home-buttons a {
-        font-size: 16px;
-        padding: 12px 20px;
+    .app-container {
+        padding: 0;
     }
 }

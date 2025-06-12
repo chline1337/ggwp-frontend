@@ -3,10 +3,11 @@ import axios from 'axios';
 const API_URL = 'http://127.0.0.1:8000';
 
 export const authService = {
-  register: async (email, password) => {
+  register: async (email, username, password) => {
     try {
       const response = await axios.post(`${API_URL}/api/auth/register`, {
         email,
+        username,
         password
       });
       

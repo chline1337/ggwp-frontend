@@ -10,93 +10,132 @@ const useTeamActions = () => {
     const navigate = useNavigate();
 
     const fetchTeams = useCallback(async () => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('access_token');
         if (!token) {
             navigate('/login');
             return;
         }
         try {
             setLoading(true);
-            const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/team/my-teams`, {
+            // For now, we'll use the same endpoint as fetchAllTeams since backend doesn't have my-teams endpoint
+            const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/teams/`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
+            // Filter teams where current user is captain or member
+            // This would ideally be done on the backend with a proper my-teams endpoint
             setTeams(res.data);
         } catch (err) {
-            alert(err.response?.data.msg || 'Error fetching teams');
-            navigate('/login');
+            console.error('Error fetching teams:', err.response?.data?.detail || err.message);
+            // Don't redirect on error, just log it
         } finally {
             setLoading(false);
         }
     }, [navigate]);
 
     const fetchAllTeams = useCallback(async () => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('access_token');
         if (!token) {
             navigate('/login');
             return;
         }
         try {
-            const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/team`, { // New endpoint needed
+            const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/teams/`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setAllTeams(res.data);
         } catch (err) {
-            alert(err.response?.data.msg || 'Error fetching all teams');
+            console.error('Error fetching all teams:', err.response?.data?.detail || err.message);
         }
     }, [navigate]);
 
     const createTeam = useCallback(async (formData) => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('access_token');
         try {
-            await axios.post(`${process.env.REACT_APP_API_URL}/api/team/create`, formData, {
+            await axios.post(`${process.env.REACT_APP_API_URL}/api/teams/`, formData, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            alert('Team created successfully');
+            console.log('Team created successfully');
             navigate('/teams');
         } catch (err) {
-            alert(err.response?.data.msg || 'Failed to create team');
+            console.error('Failed to create team:', err.response?.data?.detail || err.message);
+            throw err; // Re-throw so calling component can handle it
         }
     }, [navigate]);
 
     const sendInvite = useCallback(async (teamId, username) => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('access_token');
         try {
-            await axios.post(`${process.env.REACT_APP_API_URL}/api/team/invite`, { teamId, username }, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            alert('Invitation sent');
+            await axios.post(`${process.env.REACT_APP_API_URL}/api/teams/${teamId}/invitations`, 
+                { username: username }, 
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                }
+            );
+            console.log('Invitation sent');
             await fetchTeams();
         } catch (err) {
-            alert(err.response?.data.msg || 'Failed to send invite');
+            console.error('Failed to send invite:', err.response?.data?.detail || err.message);
+            throw err; // Re-throw so calling component can handle it
         }
     }, [fetchTeams]);
 
     const respondToInvite = useCallback(async (teamId, accept) => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('access_token');
         try {
-            await axios.post(
-                `${process.env.REACT_APP_API_URL}/api/team/respond-invitation`,
-                { teamId, accept },
+            await axios.put(
+                `${process.env.REACT_APP_API_URL}/api/teams/${teamId}/invitations`,
+                { status: accept ? 'accepted' : 'declined' },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            alert(accept ? 'Joined team' : 'Declined invitation');
+            console.log(accept ? 'Joined team' : 'Declined invitation');
             await fetchTeams();
         } catch (err) {
-            alert(err.response?.data.msg || 'Failed to respond to invite');
+            console.error('Failed to respond to invite:', err.response?.data?.detail || err.message);
+            throw err; // Re-throw so calling component can handle it
+        }
+    }, [fetchTeams]);
+
+    const removeMember = useCallback(async (teamId, userId) => {
+        const token = localStorage.getItem('access_token');
+        try {
+            await axios.delete(`${process.env.REACT_APP_API_URL}/api/teams/${teamId}/members/${userId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            console.log('Member removed successfully');
+            await fetchTeams();
+        } catch (err) {
+            console.error('Failed to remove member:', err.response?.data?.detail || err.message);
+            throw err; // Re-throw so calling component can handle it
+        }
+    }, [fetchTeams]);
+
+    const updateTeam = useCallback(async (teamId, teamData) => {
+        const token = localStorage.getItem('access_token');
+        try {
+            const response = await axios.put(`${process.env.REACT_APP_API_URL}/api/teams/${teamId}`, teamData, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            console.log('Team updated successfully');
+            await fetchTeams();
+            return response.data;
+        } catch (err) {
+            console.error('Failed to update team:', err.response?.data?.detail || err.message);
+            throw err; // Re-throw so calling component can handle it
         }
     }, [fetchTeams]);
 
     const deleteTeam = useCallback(async (teamId) => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('access_token');
         if (window.confirm('Are you sure you want to delete this team?')) {
             try {
-                await axios.delete(`${process.env.REACT_APP_API_URL}/api/team/${teamId}`, {
+                await axios.delete(`${process.env.REACT_APP_API_URL}/api/teams/${teamId}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
-                alert('Team deleted successfully');
+                console.log('Team deleted successfully');
                 await fetchTeams();
             } catch (err) {
-                alert(err.response?.data.msg || 'Failed to delete team');
+                console.error('Failed to delete team:', err.response?.data?.detail || err.message);
+                throw err; // Re-throw so calling component can handle it
             }
         }
     }, [fetchTeams]);
@@ -106,7 +145,7 @@ const useTeamActions = () => {
         fetchAllTeams(); // Fetch all teams on mount
     }, [fetchTeams, fetchAllTeams]);
 
-    return { teams, allTeams, loading, fetchTeams, fetchAllTeams, createTeam, sendInvite, respondToInvite, deleteTeam };
+    return { teams, allTeams, loading, fetchTeams, fetchAllTeams, createTeam, updateTeam, sendInvite, respondToInvite, removeMember, deleteTeam };
 };
 
 export default useTeamActions;

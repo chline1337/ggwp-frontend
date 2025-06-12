@@ -9,7 +9,7 @@ function GameAccounts({ gameAccounts, removeGameAccount }) {
                 {gameAccounts.map((acc, index) => (
                     <li key={index}>
                         {acc.gameName}: {acc.accountId}
-                        <button onClick={() => removeGameAccount(acc.gameName, acc.accountId)}>Remove</button>
+                        <button onClick={() => removeGameAccount(index)}>Remove</button>
                     </li>
                 ))}
             </ul>

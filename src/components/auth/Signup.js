@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   Box,
   Container,
@@ -18,18 +19,25 @@ import {
   PersonAdd as SignupIcon,
   ArrowBack as BackIcon
 } from '@mui/icons-material';
-import { authService } from '../../services/auth';
-
 const Signup = () => {
   const navigate = useNavigate();
+  const { register, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
+    username: '',
     password: '',
     confirmPassword: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Handle navigation after successful authentication
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -49,9 +57,10 @@ const Signup = () => {
     }
 
     try {
-      const result = await authService.register(formData.email, formData.password);
+      const result = await register(formData.email, formData.username, formData.password);
       if (result.success) {
-        navigate('/login');
+        // User will be automatically redirected via useEffect when isAuthenticated becomes true
+        // No need to manually navigate here
       } else {
         setError(result.error);
       }
@@ -109,6 +118,19 @@ const Signup = () => {
               autoComplete="email"
               autoFocus
               value={formData.email}
+              onChange={handleChange}
+              disabled={loading}
+            />
+            
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="username"
+              label="Username"
+              name="username"
+              autoComplete="username"
+              value={formData.username}
               onChange={handleChange}
               disabled={loading}
             />

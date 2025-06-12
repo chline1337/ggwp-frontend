@@ -42,6 +42,25 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const register = async (email, username, password) => {
+    setError(null);
+    try {
+      const result = await authService.register(email, username, password);
+      if (result.success) {
+        // Registration successful and token is already stored
+        // Now get the user data to set authentication state
+        await checkAuth();
+        return { success: true };
+      }
+      setError(result.error);
+      return { success: false, error: result.error };
+    } catch (err) {
+      const errorMessage = err.response?.data?.detail || 'Registration failed';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    }
+  };
+
   const logout = () => {
     authService.logout();
     setUser(null);
@@ -52,6 +71,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     error,
     login,
+    register,
     logout,
     isAuthenticated: !!user
   };

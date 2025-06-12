@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
   Paper,
@@ -38,7 +38,8 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { eventsService } from '../../services/events';
 
-function EventCreate() {
+function EventEdit() {
+  const { eventId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   
@@ -57,10 +58,64 @@ function EventCreate() {
     }
   });
   
+  const [originalEvent, setOriginalEvent] = useState(null);
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+
+  const currentUserId = user?.id || user?._id;
+
+  useEffect(() => {
+    loadEvent();
+  }, [eventId]);
+
+  const loadEvent = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const result = await eventsService.getEvent(eventId);
+      if (result.success) {
+        const event = result.data;
+        setOriginalEvent(event);
+        
+        // Check if user is the organizer
+        if (event.organizer_id !== currentUserId) {
+          setError('You are not authorized to edit this event');
+          return;
+        }
+        
+        // Format date for datetime-local input
+        const eventDate = new Date(event.date);
+        const formattedDate = eventDate.toISOString().slice(0, 16);
+        
+        // Populate form with existing data
+        setFormData({
+          name: event.name || '',
+          description: event.description || '',
+          date: formattedDate,
+          location: event.location || '',
+          max_participants: event.max_participants?.toString() || '',
+          game: event.game || '',
+          entry_fee: event.entry_fee || '',
+          prizes: event.prizes || '',
+          seatplan: {
+            rows: event.seatplan?.rows?.toString() || '',
+            columns: event.seatplan?.columns?.toString() || ''
+          }
+        });
+      } else {
+        setError(result.error);
+      }
+    } catch (err) {
+      console.error('Error loading event:', err);
+      setError('Failed to load event details');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Form validation
   const validateForm = () => {
@@ -101,6 +156,11 @@ function EventCreate() {
       } else if (maxParticipants > 1000) {
         newErrors.max_participants = 'Maximum participants cannot exceed 1000';
       }
+      
+      // Check if reducing max participants below current participant count
+      if (originalEvent && maxParticipants < originalEvent.participant_count) {
+        newErrors.max_participants = `Cannot reduce below current participant count (${originalEvent.participant_count})`;
+      }
     }
 
     if (formData.description && formData.description.length > 1000) {
@@ -135,6 +195,14 @@ function EventCreate() {
       const maxParticipants = parseInt(formData.max_participants);
       if (seatCapacity < maxParticipants) {
         newErrors.seatplan_capacity = `Seatplan capacity (${seatCapacity}) must be at least equal to maximum participants (${maxParticipants})`;
+      }
+      
+      // Check if reducing seatplan below current assignments
+      if (originalEvent && originalEvent.seatplan?.assignments) {
+        const currentAssignments = originalEvent.seatplan.assignments.length;
+        if (seatCapacity < currentAssignments) {
+          newErrors.seatplan_capacity = `Cannot reduce seatplan below current seat assignments (${currentAssignments})`;
+        }
       }
     }
 
@@ -178,7 +246,7 @@ function EventCreate() {
       return;
     }
 
-    setLoading(true);
+    setSaving(true);
     setError(null);
     setSuccess(null);
 
@@ -196,45 +264,63 @@ function EventCreate() {
         seatplan: {
           rows: parseInt(formData.seatplan.rows),
           columns: parseInt(formData.seatplan.columns),
-          assignments: []
+          assignments: originalEvent?.seatplan?.assignments || []
         }
       };
 
-      const result = await eventsService.createEvent(eventData);
+      const result = await eventsService.updateEvent(eventId, eventData);
       
       if (result.success) {
-        console.log('Event creation result:', result.data); // Debug log
-        setSuccess('Event created successfully! Redirecting...');
-        
-        // Handle different possible ID field names
-        const eventId = result.data.id || result.data._id;
-        if (eventId) {
-          setTimeout(() => {
-            navigate(`/events/${eventId}`);
-          }, 2000);
-        } else {
-          console.error('No event ID found in response:', result.data);
-          setError('Event created but unable to redirect. Please check the events list.');
-        }
+        setSuccess('Event updated successfully! Redirecting...');
+        setTimeout(() => {
+          navigate(`/events/${eventId}`);
+        }, 2000);
       } else {
         setError(result.error);
       }
     } catch (err) {
-      console.error('Error creating event:', err);
+      console.error('Error updating event:', err);
       setError('An unexpected error occurred. Please try again.');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
   const handleCancel = () => {
-    navigate('/events');
+    navigate(`/events/${eventId}`);
   };
 
   // Calculate seatplan capacity
   const seatCapacity = formData.seatplan.rows && formData.seatplan.columns 
     ? parseInt(formData.seatplan.rows) * parseInt(formData.seatplan.columns) 
     : 0;
+
+  if (loading) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+          <CircularProgress size={60} />
+        </Box>
+      </Container>
+    );
+  }
+
+  if (error && !originalEvent) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+        <Button
+          variant="contained"
+          startIcon={<BackIcon />}
+          onClick={() => navigate('/events')}
+        >
+          Back to Events
+        </Button>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
@@ -258,8 +344,16 @@ function EventCreate() {
           <EventIcon sx={{ mr: 0.5 }} fontSize="inherit" />
           Events
         </Link>
+        <Link
+          component="button"
+          variant="body1"
+          onClick={() => navigate(`/events/${eventId}`)}
+          sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}
+        >
+          {originalEvent?.name || 'Event'}
+        </Link>
         <Typography color="text.primary" sx={{ display: 'flex', alignItems: 'center' }}>
-          Create Event
+          Edit
         </Typography>
       </Breadcrumbs>
 
@@ -271,14 +365,14 @@ function EventCreate() {
           onClick={handleCancel}
           sx={{ mr: 2 }}
         >
-          Back to Events
+          Back to Event
         </Button>
         <Box>
           <Typography variant="h4" component="h1" gutterBottom>
-            Create New Event
+            Edit Event
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Create a new gaming event or LAN party for the community
+            Update your event details and settings
           </Typography>
         </Box>
       </Box>
@@ -294,6 +388,20 @@ function EventCreate() {
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {error}
+        </Alert>
+      )}
+
+      {/* Warning about existing participants */}
+      {originalEvent && originalEvent.participant_count > 0 && (
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          <Typography variant="body2" gutterBottom>
+            <strong>Note:</strong> This event has {originalEvent.participant_count} registered participants.
+          </Typography>
+          <Typography variant="body2">
+            • Cannot reduce maximum participants below current count<br/>
+            • Cannot reduce seatplan below current seat assignments<br/>
+            • Changes may affect existing registrations
+          </Typography>
         </Alert>
       )}
 
@@ -423,7 +531,7 @@ function EventCreate() {
               />
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 label="Maximum Participants"
@@ -445,7 +553,7 @@ function EventCreate() {
               />
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 label="Entry Fee"
@@ -464,7 +572,7 @@ function EventCreate() {
               />
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Prizes"
@@ -472,10 +580,12 @@ function EventCreate() {
                 value={formData.prizes}
                 onChange={handleInputChange}
                 error={!!errors.prizes}
-                helperText={errors.prizes || 'Optional - prize information'}
+                helperText={errors.prizes || 'Optional - describe prizes or rewards'}
+                multiline
+                rows={2}
                 InputProps={{
                   startAdornment: (
-                    <InputAdornment position="start">
+                    <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1 }}>
                       <PrizeIcon />
                     </InputAdornment>
                   ),
@@ -495,66 +605,53 @@ function EventCreate() {
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Number of Rows"
+                label="Rows"
                 name="seatplan.rows"
                 type="number"
                 value={formData.seatplan.rows}
                 onChange={handleInputChange}
                 error={!!errors.seatplan_rows}
-                helperText={errors.seatplan_rows || 'Number of seat rows (1-50)'}
+                helperText={errors.seatplan_rows || 'Number of seat rows'}
                 required
                 inputProps={{ min: 1, max: 50 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SeatIcon />
-                    </InputAdornment>
-                  ),
-                }}
               />
             </Grid>
 
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Number of Columns"
+                label="Columns"
                 name="seatplan.columns"
                 type="number"
                 value={formData.seatplan.columns}
                 onChange={handleInputChange}
                 error={!!errors.seatplan_columns}
-                helperText={errors.seatplan_columns || 'Number of seat columns (1-50)'}
+                helperText={errors.seatplan_columns || 'Number of seat columns'}
                 required
                 inputProps={{ min: 1, max: 50 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SeatIcon />
-                    </InputAdornment>
-                  ),
-                }}
               />
             </Grid>
 
-            {/* Seatplan Summary */}
+            {/* Seatplan Preview */}
             {seatCapacity > 0 && (
               <Grid item xs={12}>
-                <Card variant="outlined" sx={{ bgcolor: 'background.default' }}>
+                <Card variant="outlined">
                   <CardContent>
                     <Typography variant="subtitle1" gutterBottom>
-                      Seatplan Summary
+                      Seatplan Preview
                     </Typography>
-                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                       <Chip 
-                        label={`${formData.seatplan.rows} × ${formData.seatplan.columns} = ${seatCapacity} seats`}
-                        color="primary"
-                        variant="outlined"
+                        icon={<SeatIcon />} 
+                        label={`${seatCapacity} Total Seats`} 
+                        color="primary" 
+                        variant="outlined" 
                       />
-                      {formData.max_participants && (
+                      {originalEvent?.seatplan?.assignments && (
                         <Chip 
-                          label={`${formData.max_participants} max participants`}
-                          color={seatCapacity >= parseInt(formData.max_participants) ? 'success' : 'error'}
-                          variant="outlined"
+                          label={`${originalEvent.seatplan.assignments.length} Assigned`} 
+                          color="success" 
+                          variant="outlined" 
                         />
                       )}
                     </Box>
@@ -574,19 +671,17 @@ function EventCreate() {
                 <Button
                   variant="outlined"
                   onClick={handleCancel}
-                  disabled={loading}
-                  size="large"
+                  disabled={saving}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   variant="contained"
-                  disabled={loading}
-                  startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
-                  size="large"
+                  startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
+                  disabled={saving}
                 >
-                  {loading ? 'Creating Event...' : 'Create Event'}
+                  {saving ? 'Updating...' : 'Update Event'}
                 </Button>
               </Box>
             </Grid>
@@ -597,4 +692,4 @@ function EventCreate() {
   );
 }
 
-export default EventCreate;
+export default EventEdit; 
