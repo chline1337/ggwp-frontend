@@ -296,5 +296,59 @@ export const eventsService = {
         error: errorMessage
       };
     }
+  },
+
+  // Admin assign seat to any participant (organizer only)
+  assignSeatAdmin: async (eventId, userId, row, column) => {
+    try {
+      const response = await api.post(`/api/events/${eventId}/seat/admin`, {
+        user_id: userId,
+        row: row,
+        column: column
+      });
+      return {
+        success: true,
+        data: response.data,
+        message: 'Seat assigned successfully'
+      };
+    } catch (error) {
+      console.error('Admin assign seat error:', error);
+      let errorMessage = 'Failed to assign seat';
+      if (error.response?.data?.detail) {
+        errorMessage = typeof error.response.data.detail === 'string' 
+          ? error.response.data.detail 
+          : 'Failed to assign seat';
+      }
+      return {
+        success: false,
+        error: errorMessage
+      };
+    }
+  },
+
+  // Admin remove any participant's seat assignment (organizer only)
+  removeSeatAssignmentAdmin: async (eventId, userId) => {
+    try {
+      const response = await api.delete(`/api/events/${eventId}/seat/admin`, {
+        data: { user_id: userId }
+      });
+      return {
+        success: true,
+        data: response.data,
+        message: 'Seat assignment removed successfully'
+      };
+    } catch (error) {
+      console.error('Admin remove seat assignment error:', error);
+      let errorMessage = 'Failed to remove seat assignment';
+      if (error.response?.data?.detail) {
+        errorMessage = typeof error.response.data.detail === 'string' 
+          ? error.response.data.detail 
+          : 'Failed to remove seat assignment';
+      }
+      return {
+        success: false,
+        error: errorMessage
+      };
+    }
   }
 }; 

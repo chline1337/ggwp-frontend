@@ -65,8 +65,6 @@ function EventDetail() {
   const [registering, setRegistering] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [selectingSeat, setSelectingSeat] = useState(false);
-  const [skipParticipantReload, setSkipParticipantReload] = useState(false);
   const [participants, setParticipants] = useState([]);
   const [loadingParticipants, setLoadingParticipants] = useState(false);
   const [updatingPayment, setUpdatingPayment] = useState(false);
@@ -87,23 +85,19 @@ function EventDetail() {
   const isOrganizer = event && event.organizer_id === currentUserId;
   const isFull = event && event.participants && event.participants.length >= event.max_participants;
   
-  // Find current user's seat assignment
-  const currentUserSeat = event && event.seatplan && event.seatplan.assignments && event.seatplan.assignments.find(
-    assignment => assignment.user_id === currentUserId
-  );
-
   useEffect(() => {
     loadEvent();
   }, [eventId]);
 
   useEffect(() => {
-    if (event && event.participants && event.participants.length > 0 && !skipParticipantReload) {
-      // Only load participants if we don't have them yet or it's not a seat operation
-      if (participants.length === 0) {
-        loadParticipants();
-      }
+    if (event && event.participants) {
+      // Load participants whenever the event participants array changes
+      loadParticipants();
+    } else if (event && event.participants && event.participants.length === 0) {
+      // Clear participants if event has no participants
+      setParticipants([]);
     }
-  }, [event, skipParticipantReload]);
+  }, [event?.participant_count, event?.participants?.length]);
 
   const loadEvent = async () => {
     setLoading(true);
@@ -166,6 +160,8 @@ function EventDetail() {
       const result = await eventsService.registerForEvent(eventId);
       if (result.success) {
         setEvent(result.data);
+        // Explicitly reload participants after registration
+        await loadParticipants(result.data);
       } else {
         setError(result.error);
       }
@@ -184,6 +180,8 @@ function EventDetail() {
       const result = await eventsService.unregisterFromEvent(eventId);
       if (result.success) {
         await loadEvent(); // Reload event data
+        // Explicitly reload participants after unregistration
+        await loadParticipants(result.data);
       } else {
         setError(result.error);
       }
@@ -210,74 +208,6 @@ function EventDetail() {
     } finally {
       setDeleting(false);
       setDeleteDialog(false);
-    }
-  };
-
-  const handleSeatSelect = async (row, column) => {
-    setSelectingSeat(true);
-    setSkipParticipantReload(true); // Prevent automatic participant reload
-    try {
-      const result = await eventsService.assignSeat(eventId, row, column);
-      if (result.success) {
-        // Update the event state with the new data
-        setEvent(result.data);
-        
-        // Update participants with new seat assignments if we have participants loaded
-        if (participants.length > 0) {
-          const updatedParticipants = participants.map(participant => ({
-            ...participant,
-            seat_assignment: result.data.seatplan && result.data.seatplan.assignments && result.data.seatplan.assignments.find(
-              assignment => assignment.user_id === participant.user_id
-            )
-          }));
-          setParticipants(updatedParticipants);
-        }
-        
-        // Clear any previous errors
-        setError(null);
-      } else {
-        setError(result.error);
-      }
-    } catch (err) {
-      console.error('Error selecting seat:', err);
-      setError('Failed to select seat');
-    } finally {
-      setSelectingSeat(false);
-      setSkipParticipantReload(false); // Re-enable participant reload
-    }
-  };
-
-  const handleSeatRemove = async () => {
-    setSelectingSeat(true);
-    setSkipParticipantReload(true); // Prevent automatic participant reload
-    try {
-      const result = await eventsService.removeSeatAssignment(eventId);
-      if (result.success) {
-        // Update the event state with the new data
-        setEvent(result.data);
-        
-        // Update participants with new seat assignments if we have participants loaded
-        if (participants.length > 0) {
-          const updatedParticipants = participants.map(participant => ({
-            ...participant,
-            seat_assignment: result.data.seatplan && result.data.seatplan.assignments && result.data.seatplan.assignments.find(
-              assignment => assignment.user_id === participant.user_id
-            )
-          }));
-          setParticipants(updatedParticipants);
-        }
-        
-        // Clear any previous errors
-        setError(null);
-      } else {
-        setError(result.error);
-      }
-    } catch (err) {
-      console.error('Error removing seat:', err);
-      setError('Failed to remove seat');
-    } finally {
-      setSelectingSeat(false);
-      setSkipParticipantReload(false); // Re-enable participant reload
     }
   };
 
@@ -387,6 +317,20 @@ function EventDetail() {
       setError('Failed to remove participant');
     } finally {
       setRemovingParticipant(false);
+    }
+  };
+
+  // Handle seat assignment updates - reload both event and participants
+  const handleSeatUpdate = async (updatedEvent) => {
+    if (updatedEvent) {
+      // Set the updated event data
+      setEvent(updatedEvent);
+      // Reload participants with updated seat assignments
+      await loadParticipants(updatedEvent);
+    } else {
+      // Fallback to reloading from API if no event data provided
+      await loadEvent();
+      await loadParticipants();
     }
   };
 
@@ -585,23 +529,22 @@ function EventDetail() {
         {/* Main Content */}
         <Grid item xs={12} md={8}>
           {/* Participants List */}
-          {(isOrganizer || participants.length > 0) && (
-            <Paper elevation={3} sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
-                  <ListIcon sx={{ mr: 1 }} />
-                  Participants ({event.participant_count})
-                </Typography>
-                {isOrganizer && (
-                  <Chip
-                    icon={<PaymentIcon />}
-                    label="Click to edit payments"
-                    size="small"
-                    variant="outlined"
-                    color="primary"
-                  />
-                )}
-              </Box>
+          <Paper elevation={3} sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
+                <ListIcon sx={{ mr: 1 }} />
+                Participants ({event.participant_count})
+              </Typography>
+              {isOrganizer && (
+                <Chip
+                  icon={<PaymentIcon />}
+                  label="Click to edit payments"
+                  size="small"
+                  variant="outlined"
+                  color="primary"
+                />
+              )}
+            </Box>
               <Divider sx={{ mb: 3 }} />
               
               {loadingParticipants ? (
@@ -710,18 +653,17 @@ function EventDetail() {
                 </Box>
               )}
             </Paper>
-          )}
 
           {/* Seat Map */}
-          <SeatMap
-            event={event}
-            currentUserId={currentUserId}
-            currentUserSeat={currentUserSeat}
-            isRegistered={isRegistered}
-            selectingSeat={selectingSeat}
-            onSeatSelect={handleSeatSelect}
-            onSeatRemove={handleSeatRemove}
-          />
+          <Box sx={{ mt: 3 }}>
+            <SeatMap
+              event={event}
+              currentUser={user}
+              onSeatAssigned={handleSeatUpdate}
+              onSeatRemoved={handleSeatUpdate}
+              isOrganizer={isOrganizer}
+            />
+          </Box>
         </Grid>
 
         {/* Sidebar */}
@@ -980,12 +922,18 @@ function EventDetail() {
           <Typography variant="body1" sx={{ mb: 2 }}>
             Are you sure you want to unregister from this event?
           </Typography>
-          {currentUserSeat && (
-            <Alert severity="warning" sx={{ mb: 2 }}>
-              <strong>Note:</strong> You currently have seat {currentUserSeat.row}-{currentUserSeat.column} assigned. 
-              Unregistering will automatically remove your seat assignment and make it available for other participants.
-            </Alert>
-          )}
+          {(() => {
+            // Find current user's seat assignment
+            const currentUserSeat = event?.seatplan?.assignments?.find(
+              assignment => assignment.user_id === currentUserId
+            );
+            return currentUserSeat && (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                <strong>Note:</strong> You currently have seat {currentUserSeat.row}-{currentUserSeat.column} assigned. 
+                Unregistering will automatically remove your seat assignment and make it available for other participants.
+              </Alert>
+            );
+          })()}
           <Typography variant="body2" color="text.secondary">
             This action cannot be undone. You will need to register again if you change your mind.
           </Typography>
