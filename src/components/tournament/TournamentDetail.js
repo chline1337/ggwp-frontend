@@ -50,6 +50,127 @@ import useTournament from '../../hooks/useTournament';
 import useTournamentActions from '../../hooks/useTournamentActions';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiService } from '../../services/api';
+import { tournamentService } from '../../services/tournaments';
+import Bracket from './Bracket';
+import './TournamentDetail.css';
+
+// Function to generate proper single elimination bracket
+const generateMockBracket = (tournament, participants = []) => {
+  const participantIds = tournament.participants || [];
+  if (participantIds.length < 2) return [];
+
+  // Use actual participant data if available, otherwise create mock data
+  const tournamentParticipants = participants.length > 0 
+    ? participants.map(p => ({
+        _id: p.id || p._id,
+        username: p.username || p.name || 'Unknown Player',
+        name: p.username || p.name || 'Unknown Player'
+      }))
+    : participantIds.map((id, index) => ({
+        _id: id,
+        username: `Player ${index + 1}`,
+        name: `Player ${index + 1}`
+      }));
+
+  // Shuffle participants for random matchups
+  const shuffledParticipants = [...tournamentParticipants].sort(() => Math.random() - 0.5);
+  const totalParticipants = shuffledParticipants.length;
+  
+  // Calculate the number of rounds needed
+  const totalRounds = Math.ceil(Math.log2(totalParticipants));
+  
+  // Start from the final and work backwards to determine structure
+  const matches = [];
+  
+  // Calculate matches per round for single elimination
+  // Work backwards from final to determine structure
+  const roundSizes = [];
+  
+  // For single elimination, each round eliminates half the remaining players
+  // Start with total participants and work down to 1
+  let remainingPlayers = totalParticipants;
+  
+  for (let round = 1; round <= totalRounds; round++) {
+    if (remainingPlayers <= 1) break;
+    
+    // Number of matches in this round = floor(remainingPlayers / 2)
+    const matchesInRound = Math.floor(remainingPlayers / 2);
+    roundSizes.push(matchesInRound);
+    
+    // After this round, winners advance + any bye player
+    const winners = matchesInRound;
+    const byes = remainingPlayers % 2; // 1 if odd number, 0 if even
+    remainingPlayers = winners + byes;
+  }
+  
+  console.log('Round structure for', totalParticipants, 'participants:', roundSizes);
+  
+  // Generate Round 1 matches
+  const round1Matches = roundSizes[0];
+  let participantIndex = 0;
+  
+  for (let i = 0; i < round1Matches; i++) {
+    const participant1 = shuffledParticipants[participantIndex++];
+    const participant2 = participantIndex < shuffledParticipants.length 
+      ? shuffledParticipants[participantIndex++] 
+      : null;
+    
+    matches.push({
+      _id: `match-r1-${i}`,
+      participant1,
+      participant2,
+      winner: null,
+      round: 1
+    });
+  }
+  
+  // If there's an odd number of participants, one gets a bye to round 2
+  const hasFirstRoundBye = participantIndex < shuffledParticipants.length;
+  const byeParticipant = hasFirstRoundBye ? shuffledParticipants[participantIndex] : null;
+  
+  // Generate subsequent rounds
+  for (let round = 2; round <= totalRounds; round++) {
+    const matchesInRound = roundSizes[round - 1];
+    
+    for (let i = 0; i < matchesInRound; i++) {
+      const match = {
+        _id: `match-r${round}-${i}`,
+        participant1: null, // Will be filled by winners from previous round
+        participant2: null, // Will be filled by winners from previous round  
+        winner: null,
+        round: round
+      };
+      
+      // Handle bye participant in round 2
+      if (round === 2 && i === matchesInRound - 1 && byeParticipant) {
+        match.participant2 = byeParticipant; // Bye participant goes to last match of round 2
+      }
+      
+      matches.push(match);
+    }
+  }
+
+  console.log('Generated bracket structure:', {
+    totalParticipants,
+    totalRounds,
+    roundSizes,
+    hasFirstRoundBye: hasFirstRoundBye,
+    byeParticipant: byeParticipant?.username,
+    totalMatches: matches.length,
+    matchesByRound: matches.reduce((acc, match) => {
+      acc[match.round] = (acc[match.round] || 0) + 1;
+      return acc;
+    }, {}),
+    allMatches: matches.map(m => ({
+      id: m._id,
+      round: m.round,
+      p1: m.participant1?.username || 'null',
+      p2: m.participant2?.username || 'null'
+    }))
+  });
+
+  return matches;
+};
 
 function TournamentDetail() {
   const { id } = useParams();
@@ -69,6 +190,10 @@ function TournamentDetail() {
   const [participantsLoading, setParticipantsLoading] = useState(false);
   const [availableUsers, setAvailableUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
+  
+  // State for bracket/matches
+  const [matches, setMatches] = useState([]);
+  const [matchesLoading, setMatchesLoading] = useState(false);
   
   const userId = user?.id || user?._id;
   const isOrganizer = tournament && user && String(tournament.organizer_id) === String(userId);
@@ -169,6 +294,361 @@ function TournamentDetail() {
       loadAvailableUsers();
     }
   }, [isOrganizer, addParticipantDialog, loadAvailableUsers]);
+
+  // Function to advance winner to next round
+  const advanceWinnerToNextRound = useCallback((completedMatch, winnerParticipant, allMatches) => {
+    const currentRound = completedMatch.round;
+    const nextRound = currentRound + 1;
+    
+    // Find all matches in current round
+    const currentRoundMatches = allMatches
+      .filter(match => match.round === currentRound)
+      .sort((a, b) => (a.match_number || 0) - (b.match_number || 0));
+    
+    // Find the index of the completed match
+    const completedMatchIndex = currentRoundMatches.findIndex(match => 
+      (match._id || match.id) === (completedMatch._id || completedMatch.id)
+    );
+    
+    if (completedMatchIndex === -1) return allMatches;
+    
+    // Calculate which next round match this winner should go to
+    const nextMatchIndex = Math.floor(completedMatchIndex / 2);
+    
+    // Find the next round match
+    const nextRoundMatches = allMatches.filter(match => match.round === nextRound);
+    const nextMatch = nextRoundMatches[nextMatchIndex];
+    
+    if (!nextMatch) return allMatches;
+    
+    // Determine if winner goes to participant1 or participant2 slot
+    const isFirstSlot = completedMatchIndex % 2 === 0;
+    
+    console.log('Advancing winner to next round:', {
+      completedMatchIndex,
+      nextMatchIndex,
+      isFirstSlot,
+      winner: winnerParticipant.username,
+      nextMatch: nextMatch._id || nextMatch.id
+    });
+    
+    // Update the next round match
+    return allMatches.map(match => {
+      if ((match._id || match.id) === (nextMatch._id || nextMatch.id)) {
+        if (isFirstSlot) {
+          return { ...match, participant1: winnerParticipant };
+        } else {
+          return { ...match, participant2: winnerParticipant };
+        }
+      }
+      return match;
+    });
+  }, []);
+
+  // Function to check for and handle bye matches (participant vs TBD)
+  const handleByeMatches = useCallback(async (allMatches) => {
+    let updatedMatches = [...allMatches];
+    
+    // Find bye matches that need to be processed
+    const byeMatches = allMatches.filter(match => {
+      const hasParticipant1 = match.participant1 && match.participant1.username !== 'TBD';
+      const hasParticipant2 = match.participant2 && match.participant2.username !== 'TBD';
+      
+      // Return true if it's a bye match without a winner
+      return !match.winner && ((hasParticipant1 && !hasParticipant2) || (!hasParticipant1 && hasParticipant2));
+    });
+    
+    // Process each bye match
+    for (const match of byeMatches) {
+      const hasParticipant1 = match.participant1 && match.participant1.username !== 'TBD';
+      const hasParticipant2 = match.participant2 && match.participant2.username !== 'TBD';
+      
+      let winnerParticipant = null;
+      let winnerId = null;
+      
+      if (hasParticipant1 && !hasParticipant2) {
+        winnerParticipant = match.participant1;
+        winnerId = match.participant1.id || match.participant1._id;
+        console.log('Auto-advancing participant1 in bye match:', match.participant1.username);
+      } else if (!hasParticipant1 && hasParticipant2) {
+        winnerParticipant = match.participant2;
+        winnerId = match.participant2.id || match.participant2._id;
+        console.log('Auto-advancing participant2 in bye match:', match.participant2.username);
+      }
+      
+      if (winnerParticipant && winnerId) {
+        try {
+          // Call the backend API to update the match result and advance the winner
+          const response = await apiService.updateMatchResult(
+            tournament.id || tournament._id, 
+            match._id || match.id, 
+            winnerId
+          );
+          
+          if (response.success) {
+            console.log(`Bye match ${match._id || match.id} updated successfully in database`);
+            
+            // Update the local state optimistically
+            updatedMatches = updatedMatches.map(m => {
+              if ((m._id || m.id) === (match._id || match.id)) {
+                return { ...m, winner: winnerParticipant };
+              }
+              return m;
+            });
+            
+            // Advance winner to next round in local state
+            updatedMatches = advanceWinnerToNextRound(match, winnerParticipant, updatedMatches);
+            
+          } else {
+            console.error('Failed to update bye match in database:', response.error);
+          }
+        } catch (error) {
+          console.error('Error updating bye match:', error);
+        }
+      }
+    }
+    
+    return updatedMatches;
+  }, [tournament, advanceWinnerToNextRound]);
+
+  const loadMatches = useCallback(async () => {
+    if (!tournament || (!tournament.participants || tournament.participants.length < 2)) return;
+    
+    setMatchesLoading(true);
+    try {
+      // Load actual matches from backend
+      const result = await tournamentService.getTournamentBrackets(tournament.id || tournament._id);
+      console.log('Backend brackets response:', result);
+      
+      if (result.success && result.data && result.data.matches && result.data.matches.length > 0) {
+        // Check if matches have participant data
+        const backendMatches = result.data.matches;
+        console.log('Backend matches:', backendMatches);
+        
+        // Check if backend matches already have participant details (MatchOut format)
+        const hasParticipantDetails = backendMatches.some(match => 
+          match.participant1 !== null || match.participant2 !== null
+        );
+
+        if (hasParticipantDetails) {
+          // Backend returned enriched matches, use them directly
+          console.log('Using backend enriched matches');
+          // Handle any bye matches in the backend matches
+          const matchesWithByes = await handleByeMatches(backendMatches);
+          setMatches(matchesWithByes);
+        } else {
+          // Backend matches only have IDs, need to transform them
+          console.log('Transforming backend matches with participant details');
+          console.log('Available participants for transformation:', participants);
+          
+          const transformedMatches = await Promise.all(
+            backendMatches.map(async (match) => {
+              console.log('Processing match:', match);
+              console.log('Match participant1_id:', match.participant1_id);
+              console.log('Match participant2_id:', match.participant2_id);
+              
+              const transformedMatch = {
+                _id: match._id || match.id,
+                id: match._id || match.id,
+                round: match.round,
+                participant1: null,
+                participant2: null,
+                winner: null
+              };
+
+              // Get participant1 details
+              if (match.participant1_id) {
+                console.log('Looking for participant1_id:', match.participant1_id);
+                const participant = participants.find(p => {
+                  const pId = p.id || p._id;
+                  console.log('Comparing with participant ID:', pId, 'Match:', pId === match.participant1_id);
+                  return pId === match.participant1_id;
+                });
+                console.log('Found participant1:', participant);
+                if (participant) {
+                  transformedMatch.participant1 = {
+                    _id: participant.id || participant._id,
+                    id: participant.id || participant._id,
+                    username: participant.username,
+                    name: participant.username
+                  };
+                }
+              }
+
+              // Get participant2 details
+              if (match.participant2_id) {
+                console.log('Looking for participant2_id:', match.participant2_id);
+                const participant = participants.find(p => {
+                  const pId = p.id || p._id;
+                  console.log('Comparing with participant ID:', pId, 'Match:', pId === match.participant2_id);
+                  return pId === match.participant2_id;
+                });
+                console.log('Found participant2:', participant);
+                if (participant) {
+                  transformedMatch.participant2 = {
+                    _id: participant.id || participant._id,
+                    id: participant.id || participant._id,
+                    username: participant.username,
+                    name: participant.username
+                  };
+                }
+              }
+
+              // Handle winner
+              if (match.winner_id) {
+                const winner = participants.find(p => 
+                  (p.id || p._id) === match.winner_id
+                );
+                if (winner) {
+                  transformedMatch.winner = {
+                    _id: winner.id || winner._id,
+                    id: winner.id || winner._id,
+                    username: winner.username,
+                    name: winner.username
+                  };
+                }
+              }
+
+              console.log('Transformed match result:', transformedMatch);
+              return transformedMatch;
+            })
+          );
+
+          console.log('Transformed matches:', transformedMatches);
+          
+          // Check if transformation was successful (at least first round should have participants)
+          const firstRoundMatches = transformedMatches.filter(match => match.round === 1);
+          const hasValidParticipants = firstRoundMatches.some(match => 
+            match.participant1 !== null && match.participant2 !== null
+          );
+
+          if (hasValidParticipants) {
+            // Handle any bye matches in the transformed matches
+            const matchesWithByes = await handleByeMatches(transformedMatches);
+            console.log('Final matches with byes by round:', 
+              matchesWithByes.reduce((acc, match) => {
+                const round = match.round || 1;
+                if (!acc[round]) acc[round] = [];
+                acc[round].push(match);
+                return acc;
+              }, {})
+            );
+            setMatches(matchesWithByes);
+          } else {
+            console.warn('Transformation failed, falling back to mock bracket');
+            const mockMatches = generateMockBracket(tournament, participants);
+            console.log('Fallback mock matches:', mockMatches);
+            // Handle any bye matches in the mock bracket
+            const mockMatchesWithByes = await handleByeMatches(mockMatches);
+            console.log('Mock matches with byes by round:', 
+              mockMatchesWithByes.reduce((acc, match) => {
+                const round = match.round || 1;
+                if (!acc[round]) acc[round] = [];
+                acc[round].push(match);
+                return acc;
+              }, {})
+            );
+            setMatches(mockMatchesWithByes);
+          }
+        }
+      } else {
+        console.warn('No backend matches found, generating mock bracket');
+        // Fall back to mock bracket if no backend matches or they're incomplete
+        const mockMatches = generateMockBracket(tournament, participants);
+        console.log('Generated mock matches:', mockMatches);
+        // Handle any bye matches in the mock bracket
+        const mockMatchesWithByes = await handleByeMatches(mockMatches);
+        setMatches(mockMatchesWithByes);
+      }
+    } catch (error) {
+      console.error('Error loading matches, falling back to mock bracket:', error);
+      // Fall back to mock bracket on error
+      const mockMatches = generateMockBracket(tournament, participants);
+      console.log('Fallback mock matches:', mockMatches);
+      // Handle any bye matches in the fallback mock bracket
+      const mockMatchesWithByes = await handleByeMatches(mockMatches);
+      setMatches(mockMatchesWithByes);
+    } finally {
+      setMatchesLoading(false);
+    }
+  }, [tournament, participants, handleByeMatches]);
+
+
+
+  // Function to update match result with optimistic updates and round progression
+  const updateMatchResult = useCallback(async (matchId, winnerId) => {
+    console.log('updateMatchResult called with:', { matchId, winnerId });
+    
+    // First, do an optimistic update to the local state for immediate UI feedback
+    let updatedMatches;
+    setMatches(prevMatches => {
+      updatedMatches = prevMatches.map(match => {
+        if ((match._id || match.id) === matchId) {
+          // Find the winner participant object
+          let winnerParticipant = null;
+          if ((match.participant1?.id || match.participant1?._id) === winnerId) {
+            winnerParticipant = match.participant1;
+          } else if ((match.participant2?.id || match.participant2?._id) === winnerId) {
+            winnerParticipant = match.participant2;
+          }
+          
+          console.log('Optimistically updating match:', matchId, 'winner:', winnerParticipant);
+          
+          return {
+            ...match,
+            winner: winnerParticipant
+          };
+        }
+        return match;
+      });
+
+      // Find the completed match for round progression
+      const completedMatch = updatedMatches.find(match => 
+        (match._id || match.id) === matchId
+      );
+      
+      if (completedMatch && completedMatch.winner) {
+        // Advance winner to next round
+        updatedMatches = advanceWinnerToNextRound(completedMatch, completedMatch.winner, updatedMatches);
+      }
+
+      return updatedMatches;
+    });
+
+    // Handle any new bye matches that might have been created (async operation)
+    try {
+      const matchesWithByes = await handleByeMatches(updatedMatches);
+      setMatches(matchesWithByes);
+    } catch (error) {
+      console.error('Error handling bye matches:', error);
+    }
+
+    // Then sync with backend (but don't reload all matches to avoid overwriting the optimistic update)
+    try {
+      const response = await apiService.updateMatchResult(tournament.id || tournament._id, matchId, winnerId);
+      if (response.success) {
+        console.log('Backend match update successful:', response);
+        // Optionally, we could do a partial reload here, but the optimistic update should be sufficient
+      } else {
+        console.error('Backend match update failed:', response.error);
+        // If backend update fails, we might want to revert the optimistic update
+        // For now, we'll just log the error
+      }
+    } catch (error) {
+      console.error('Error updating match result:', error);
+      // On error, we could revert the optimistic update by reloading matches
+      // await loadMatches();
+    }
+  }, [tournament, advanceWinnerToNextRound, handleByeMatches]);
+
+  // Load matches/bracket when tournament has started and participants are loaded
+  useEffect(() => {
+    if (tournament && (tournament.status === 'started' || tournament.status === 'completed') && participants.length > 0) {
+      loadMatches();
+    }
+  }, [tournament, participants, loadMatches]);
+
+
 
   const handleStartTournament = async () => {
     setActionLoading(true);
@@ -581,15 +1061,33 @@ function TournamentDetail() {
           </Card>
 
           {/* Tournament Bracket/Results Section */}
-          {tournament.status === 'started' && (
+          {(tournament.status === 'started' || tournament.status === 'completed') && (
             <Card>
               <CardContent>
                 <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>
                   Tournament Bracket
                 </Typography>
-                <Alert severity="info">
-                  Tournament bracket functionality coming soon!
-                </Alert>
+                {matchesLoading ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+                    <CircularProgress />
+                  </Box>
+                ) : matches && matches.length > 0 ? (
+                  <Box sx={{ position: 'relative', overflow: 'auto' }}>
+                                    <Bracket 
+                  tournament={{...tournament, matches}} 
+                  isOrganizer={isOrganizer}
+                  refreshTournament={refreshTournament}
+                  onMatchResult={updateMatchResult}
+                />
+                  </Box>
+                ) : (
+                  <Alert severity="info">
+                    {tournament.status === 'started' 
+                      ? 'Bracket is being generated. Please refresh the page in a moment.'
+                      : 'Tournament bracket will be available once the tournament starts.'
+                    }
+                  </Alert>
+                )}
               </CardContent>
             </Card>
           )}

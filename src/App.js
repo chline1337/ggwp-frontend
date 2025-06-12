@@ -30,6 +30,7 @@ import TeamEdit from './components/team/TeamEdit';
 import TournamentCreate from './components/tournament/TournamentCreate';
 import TournamentList from './components/tournament/TournamentList';
 import TournamentDetail from './components/tournament/TournamentDetail';
+import TournamentEdit from './components/tournament/TournamentEdit';
 import EventDetail from './components/event/EventDetail';
 import EventList from './components/event/EventList';
 import EventCreate from './components/event/EventCreate';
@@ -243,7 +244,7 @@ const HomeRedirect = () => {
                             letterSpacing: '-0.02em'
                         }}
                     >
-                        Welcome to GGWP Esports
+                        Welcome to OC-LANgenthal
                     </Typography>
                     <Typography
                         variant="h5"
@@ -456,6 +457,11 @@ function App() {
                                 <Route path="/tournament-create" element={<TournamentCreate />} />
                                 <Route path="/tournaments" element={<TournamentList />} />
                                 <Route path="/tournaments/:id" element={<TournamentDetail />} />
+                                <Route path="/tournaments/:id/edit" element={
+                                    <ProtectedRoute>
+                                        <TournamentEdit />
+                                    </ProtectedRoute>
+                                } />
                                 <Route path="/events" element={<EventList />} />
                                 <Route path="/events/:eventId" element={<EventDetail />} />
                                 <Route path="/events/:eventId/edit" element={

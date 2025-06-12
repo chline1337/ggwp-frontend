@@ -165,6 +165,10 @@ export const tournamentService = {
   createTournament: async (tournamentData) => {
     try {
       const backendData = transformTournamentToBackend(tournamentData);
+      console.log('=== Tournament Creation Debug ===');
+      console.log('Original frontend data:', tournamentData);
+      console.log('Transformed backend data:', backendData);
+      
       const response = await api.post('/api/tournaments', backendData);
       return {
         success: true,
@@ -173,14 +177,25 @@ export const tournamentService = {
       };
     } catch (error) {
       console.error('Create tournament error:', error);
+      console.error('Error response data:', error.response?.data);
+      console.error('Error response status:', error.response?.status);
+      
       let errorMessage = 'Failed to create tournament';
       if (error.response?.data?.detail) {
-        errorMessage = typeof error.response.data.detail === 'string' 
-          ? error.response.data.detail 
-          : 'Failed to create tournament';
+        if (typeof error.response.data.detail === 'string') {
+          errorMessage = error.response.data.detail;
+        } else if (Array.isArray(error.response.data.detail)) {
+          // Handle validation errors array
+          errorMessage = error.response.data.detail
+            .map(err => `${err.loc?.join('.')}: ${err.msg}`)
+            .join(', ');
+        } else {
+          errorMessage = 'Validation error occurred';
+        }
       } else if (error.response?.data?.msg) {
         errorMessage = error.response.data.msg;
       }
+      
       return {
         success: false,
         error: errorMessage
@@ -348,9 +363,17 @@ export const tournamentService = {
   getTournamentBrackets: async (tournamentId) => {
     try {
       const response = await api.get(`/api/tournaments/${tournamentId}/brackets`);
+      console.log('Raw backend response:', response.data);
+      
+      // Handle the backend response format which includes both brackets and matches
+      const data = {
+        brackets: response.data.brackets || [],
+        matches: response.data.matches || []
+      };
+      
       return {
         success: true,
-        data: response.data
+        data: data
       };
     } catch (error) {
       console.error('Get tournament brackets error:', error);
@@ -365,7 +388,7 @@ export const tournamentService = {
       return {
         success: false,
         error: errorMessage,
-        data: []
+        data: { brackets: [], matches: [] }
       };
     }
   }

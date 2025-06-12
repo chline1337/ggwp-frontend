@@ -319,6 +319,41 @@ export const apiService = {
         error: errorMessage
       };
     }
+  },
+
+  // Tournament match result management
+  updateMatchResult: async (tournamentId, matchId, winnerId) => {
+    try {
+      console.log('=== Update Match Result Debug ===');
+      console.log('Tournament ID:', tournamentId);
+      console.log('Match ID:', matchId);
+      console.log('Winner ID:', winnerId);
+      
+      // Use the correct backend endpoint that expects data in request body
+      const response = await api.post('/api/tournaments/result', {
+        tournamentId: tournamentId,
+        matchId: matchId,
+        winnerId: winnerId
+      });
+      return {
+        success: true,
+        data: response.data,
+        message: 'Match result updated successfully'
+      };
+    } catch (error) {
+      console.error('Update match result error:', error);
+      console.error('Error response:', error.response?.data);
+      let errorMessage = 'Failed to update match result';
+      if (error.response?.data?.detail) {
+        errorMessage = typeof error.response.data.detail === 'string' 
+          ? error.response.data.detail 
+          : 'Failed to update match result';
+      }
+      return {
+        success: false,
+        error: errorMessage
+      };
+    }
   }
 };
 

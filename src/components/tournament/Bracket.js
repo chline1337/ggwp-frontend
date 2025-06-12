@@ -1,46 +1,64 @@
 // src/components/tournament/Bracket.js
 import React, { useRef } from 'react';
-import axios from 'axios';
+import {
+  Box,
+  Paper,
+  Typography,
+  Button,
+  Grid,
+  Card,
+  CardContent,
+  Alert,
+  Chip
+} from '@mui/material';
+import {
+  EmojiEvents as TrophyIcon,
+  SportsEsports as GameIcon
+} from '@mui/icons-material';
+import { apiService } from '../../services/api';
 
-function Bracket({ tournament, isOrganizer, refreshTournament }) {
+function Bracket({ tournament, isOrganizer, refreshTournament, onMatchResult }) {
     const bracketRef = useRef(null);
 
     const updateResult = async (matchId, winnerId) => {
-        const token = localStorage.getItem('token');
-        console.log('Updating result:', { tournamentId: tournament._id, matchId, winnerId, token });
-        try {
-            const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/tournaments/result`, {
-                tournamentId: tournament._id,
-                matchId,
-                winnerId
-            }, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            console.log('Result updated successfully:', res.data);
-            alert('Result updated');
-            refreshTournament();
-        } catch (err) {
-            console.error('Failed to update result:', err.response?.data.msg || err.message);
-            alert(err.response?.data.msg || 'Failed to update result');
+        console.log('Bracket updateResult called:', { tournamentId: tournament._id || tournament.id, matchId, winnerId });
+        
+        // Simply call the parent's match result handler - it will handle both optimistic updates and backend sync
+        if (onMatchResult) {
+            await onMatchResult(matchId, winnerId);
+        } else {
+            console.warn('No onMatchResult handler provided to Bracket component');
         }
     };
 
-    const getRounds = (matches, maxParticipants) => {
+    const getRounds = (matches) => {
+        if (!matches || matches.length === 0) return [];
+        
+        // Group matches by their round property
+        const roundsMap = {};
+        matches.forEach(match => {
+            const roundNum = match.round || 1;
+            if (!roundsMap[roundNum]) {
+                roundsMap[roundNum] = [];
+            }
+            roundsMap[roundNum].push(match);
+        });
+        
+        // Convert to array and sort by round number
         const rounds = [];
-        const totalRounds = Math.log2(maxParticipants);
-        let start = 0;
-        for (let i = 0; i < totalRounds; i++) {
-            const roundSize = maxParticipants / Math.pow(2, i);
-            const end = start + roundSize / 2;
-            rounds.push(matches.slice(start, end));
-            start = end;
-        }
+        const sortedRoundNumbers = Object.keys(roundsMap).map(Number).sort((a, b) => a - b);
+        
+        sortedRoundNumbers.forEach(roundNum => {
+            rounds.push(roundsMap[roundNum]);
+        });
+        
+        console.log('Organized rounds:', rounds);
         return rounds;
     };
 
     const renderConnectors = () => {
         const connectors = [];
-        const rounds = getRounds(tournament.matches, tournament.maxParticipants);
+        const rounds = getRounds(tournament.matches);
         const bracketEl = bracketRef.current;
         if (!bracketEl) return connectors;
 
@@ -81,51 +99,176 @@ function Bracket({ tournament, isOrganizer, refreshTournament }) {
         return connectors;
     };
 
+    if (!tournament.matches || tournament.matches.length === 0) {
+        return (
+            <Alert severity="info">
+                No matches available yet. The bracket will appear once the tournament starts and matches are generated.
+            </Alert>
+        );
+    }
+
+    console.log('Bracket component received tournament:', tournament);
+    console.log('Bracket component received matches:', tournament.matches);
+
+    const rounds = getRounds(tournament.matches);
+
     return (
-        <div className="bracket" ref={bracketRef}>
-            <h4>Bracket</h4>
-            <svg className="bracket-connectors" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+        <Box sx={{ position: 'relative', width: '100%' }}>
+            {/* SVG Connectors */}
+            <Box
+                component="svg"
+                ref={bracketRef}
+                sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    pointerEvents: 'none',
+                    zIndex: 1
+                }}
+            >
                 {renderConnectors()}
-            </svg>
-            {getRounds(tournament.matches, tournament.maxParticipants).map((round, roundIndex) => (
-                <div
-                    key={roundIndex}
-                    className={`round round-${roundIndex} ${roundIndex > 1 ? 'centered-round' : ''}`}
-                >
-                    <h5>Round {roundIndex + 1}</h5>
-                    <ul>
-                        {round.map((match) => (
-                            <li key={match._id} className="match">
-                                <span className="participant">
-                                    {match.participant1 ? (match.participant1.username || match.participant1.name) : 'TBD'}
-                                </span>
-                                <span className="vs">vs</span>
-                                <span className="participant">
-                                    {match.participant2 ? (match.participant2.username || match.participant2.name) : 'TBD'}
-                                </span>
-                                <span className="result">
-                                    - Winner: {match.winner ? (match.winner.username || match.winner.name) : 'Pending'}
-                                </span>
-                                {isOrganizer && !match.winner && (
-                                    <div className="actions">
-                                        {match.participant1 && (
-                                            <button onClick={() => updateResult(match._id, match.participant1._id)}>
-                                                {match.participant1.username || match.participant1.name} Wins
-                                            </button>
-                                        )}
-                                        {match.participant2 && (
-                                            <button onClick={() => updateResult(match._id, match.participant2._id)}>
-                                                {match.participant2.username || match.participant2.name} Wins
-                                            </button>
-                                        )}
-                                    </div>
+            </Box>
+
+            {/* Bracket Rounds */}
+            <Grid container spacing={3} sx={{ position: 'relative', zIndex: 2 }}>
+                {rounds.map((round, roundIndex) => (
+                    <Grid item xs={12} md={12 / rounds.length} key={roundIndex}>
+                        <Paper 
+                            elevation={2} 
+                            sx={{ 
+                                p: 2, 
+                                height: '100%',
+                                backgroundColor: 'background.paper'
+                            }}
+                            className={`round round-${roundIndex}`}
+                        >
+                            <Typography 
+                                variant="h6" 
+                                sx={{ 
+                                    fontWeight: 600, 
+                                    mb: 2, 
+                                    textAlign: 'center',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: 1
+                                }}
+                            >
+                                {roundIndex === rounds.length - 1 ? (
+                                    <>
+                                        <TrophyIcon color="primary" />
+                                        Final
+                                    </>
+                                ) : (
+                                    <>
+                                        <GameIcon color="primary" />
+                                        Round {roundIndex + 1}
+                                    </>
                                 )}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            ))}
-        </div>
+                            </Typography>
+                            
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                {round.map((match) => (
+                                    <Card 
+                                        key={match.id || match._id} 
+                                        variant="outlined"
+                                        className="match"
+                                        sx={{ 
+                                            p: 2,
+                                            backgroundColor: match.winner ? 'success.light' : 'background.default',
+                                            opacity: match.winner ? 0.9 : 1,
+                                            transition: 'all 0.3s ease'
+                                        }}
+                                    >
+                                        {/* Participants */}
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                                            <Typography 
+                                                variant="body1" 
+                                                sx={{ 
+                                                    fontWeight: match.winner && (match.winner.id || match.winner._id) === (match.participant1?.id || match.participant1?._id) ? 700 : 400,
+                                                    color: match.winner && (match.winner.id || match.winner._id) === (match.participant1?.id || match.participant1?._id) ? 'success.main' : 'text.primary'
+                                                }}
+                                            >
+                                                {match.participant1 ? (match.participant1.username || match.participant1.name) : 'TBD'}
+                                            </Typography>
+                                            <Typography variant="body2" color="text.secondary" sx={{ mx: 1 }}>
+                                                vs
+                                            </Typography>
+                                            <Typography 
+                                                variant="body1" 
+                                                sx={{ 
+                                                    fontWeight: match.winner && (match.winner.id || match.winner._id) === (match.participant2?.id || match.participant2?._id) ? 700 : 400,
+                                                    color: match.winner && (match.winner.id || match.winner._id) === (match.participant2?.id || match.participant2?._id) ? 'success.main' : 'text.primary'
+                                                }}
+                                            >
+                                                {match.participant2 ? (match.participant2.username || match.participant2.name) : 'TBD'}
+                                            </Typography>
+                                        </Box>
+
+                                        {/* Winner Display */}
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+                                            {match.winner ? (
+                                                <Chip 
+                                                    icon={<TrophyIcon />}
+                                                    label={`Winner: ${match.winner.username || match.winner.name}`}
+                                                    color="success"
+                                                    size="small"
+                                                />
+                                            ) : (
+                                                <Chip 
+                                                    label="Pending"
+                                                    color="default"
+                                                    size="small"
+                                                    variant="outlined"
+                                                />
+                                            )}
+                                        </Box>
+
+                                        {/* Organizer Actions */}
+                                        {isOrganizer && !match.winner && match.participant1 && match.participant2 && (
+                                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                                                <Button
+                                                    size="small"
+                                                    variant="outlined"
+                                                    color="success"
+                                                    onClick={() => updateResult(match.id || match._id, match.participant1.id || match.participant1._id)}
+                                                >
+                                                    {match.participant1.username || match.participant1.name} Wins
+                                                </Button>
+                                                <Button
+                                                    size="small"
+                                                    variant="outlined"
+                                                    color="success"
+                                                    onClick={() => updateResult(match.id || match._id, match.participant2.id || match.participant2._id)}
+                                                >
+                                                    {match.participant2.username || match.participant2.name} Wins
+                                                </Button>
+                                            </Box>
+                                        )}
+                                        
+                                        {/* Bye Match Indicator */}
+                                        {((!match.participant1 || match.participant1.username === 'TBD') || 
+                                          (!match.participant2 || match.participant2.username === 'TBD')) && 
+                                         !match.winner && (
+                                            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+                                                <Chip 
+                                                    label="Bye - Auto Advance"
+                                                    color="info"
+                                                    size="small"
+                                                    variant="outlined"
+                                                />
+                                            </Box>
+                                        )}
+                                    </Card>
+                                ))}
+                            </Box>
+                        </Paper>
+                    </Grid>
+                ))}
+            </Grid>
+        </Box>
     );
 }
 

@@ -38,7 +38,7 @@ const TOURNAMENT_FORMATS = [
   }
 ];
 
-function TournamentPreview({ formData, selectedTeams }) {
+function TournamentPreview({ formData, selectedTeams, isEdit = false }) {
   const getFormatLabel = (format) => {
     return TOURNAMENT_FORMATS.find(f => f.value === format)?.label || format;
   };
@@ -182,7 +182,10 @@ function TournamentPreview({ formData, selectedTeams }) {
       </Card>
 
       <Alert severity="info" icon={<InfoIcon />}>
-        Please review all tournament details before creating. You can modify some settings after creation, but core tournament structure cannot be changed.
+        {isEdit 
+          ? 'Please review your changes before updating the tournament. Some structural changes may affect current participants.'
+          : 'Please review all tournament details before creating. You can modify some settings after creation, but core tournament structure cannot be changed.'
+        }
       </Alert>
     </Box>
   );
