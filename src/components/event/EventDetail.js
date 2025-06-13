@@ -562,7 +562,10 @@ function EventDetail() {
                           color={participant.payment_status === 'paid' ? 'success' : 'warning'}
                           overlap="circular"
                         >
-                          <Avatar sx={{ bgcolor: 'primary.main' }}>
+                          <Avatar 
+                            sx={{ bgcolor: 'primary.main' }}
+                            src={participant.avatar ? `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}${participant.avatar}` : null}
+                          >
                             {participant.username.charAt(0).toUpperCase()}
                           </Avatar>
                         </Badge>

@@ -81,9 +81,37 @@ const useProfileActions = () => {
     }, []);
 
     const uploadAvatar = useCallback(async (file) => {
-        // Avatar upload functionality not yet implemented in backend
-        console.log('Avatar upload feature is not yet available. Please check back later.');
-        return;
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            throw new Error('Authentication required');
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await axios.post(
+                `${API_BASE_URL}/api/users/me/avatar`,
+                formData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'multipart/form-data',
+                    }
+                }
+            );
+
+            // Update user state with new avatar URL
+            setUser(prev => ({
+                ...prev,
+                avatar: response.data.avatar
+            }));
+
+            return response.data;
+        } catch (err) {
+            console.error('Failed to upload avatar:', err.response?.data?.detail || err.message);
+            throw err;
+        }
     }, []);
 
     useEffect(() => {

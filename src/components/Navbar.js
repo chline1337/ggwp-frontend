@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme as useCustomTheme } from '../contexts/ThemeContext';
 import { AdminOnly } from '../components/common/RoleBasedComponent';
 import {
   AppBar,
@@ -18,7 +19,8 @@ import {
   useTheme,
   useMediaQuery,
   Avatar,
-  Chip
+  Chip,
+  Tooltip
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -31,12 +33,15 @@ import {
   Add as CreateIcon,
   Logout as LogoutIcon,
   Home as HomeIcon,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  LightMode as LightModeIcon,
+  DarkMode as DarkModeIcon
 } from '@mui/icons-material';
 
 function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isAuthenticated, logout, user } = useAuth();
+  const { isDarkMode, toggleTheme } = useCustomTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
@@ -98,7 +103,10 @@ function Navbar() {
               }
             }}
           >
-            <Avatar sx={{ width: 24, height: 24, bgcolor: 'primary.main' }}>
+            <Avatar 
+              sx={{ width: 24, height: 24, bgcolor: 'primary.main' }}
+              src={user.avatar ? `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}${user.avatar}` : null}
+            >
               {user.username?.charAt(0).toUpperCase()}
             </Avatar>
             <Typography variant="body2" color="text.secondary">
@@ -170,13 +178,14 @@ function Navbar() {
         {isAuthenticated && (
           <>
             <ListItem disablePadding sx={{ mt: 2, borderTop: 1, borderColor: 'divider', pt: 1 }}>
-                          <ListItemButton onClick={() => handleNavigation('/settings')}>
-              <ListItemIcon sx={{ minWidth: 40 }}>
-                <SettingsIcon />
-              </ListItemIcon>
-              <ListItemText primary="Settings" />
-            </ListItemButton>
+              <ListItemButton onClick={() => handleNavigation('/settings')}>
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <SettingsIcon />
+                </ListItemIcon>
+                <ListItemText primary="Settings" />
+              </ListItemButton>
             </ListItem>
+
             <ListItem disablePadding>
               <ListItemButton onClick={handleLogout}>
                 <ListItemIcon sx={{ minWidth: 40 }}>
@@ -187,6 +196,16 @@ function Navbar() {
             </ListItem>
           </>
         )}
+        
+        {/* Theme Toggle for All Users */}
+        <ListItem disablePadding sx={{ mt: !isAuthenticated ? 2 : 0, borderTop: !isAuthenticated ? 1 : 0, borderColor: 'divider', pt: !isAuthenticated ? 1 : 0 }}>
+          <ListItemButton onClick={toggleTheme}>
+            <ListItemIcon sx={{ minWidth: 40 }}>
+              {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
+            </ListItemIcon>
+            <ListItemText primary={isDarkMode ? 'Light Mode' : 'Dark Mode'} />
+          </ListItemButton>
+        </ListItem>
       </List>
     </Box>
   );
@@ -273,6 +292,23 @@ function Navbar() {
           {/* Desktop User Actions */}
           {!isMobile && isAuthenticated && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Tooltip title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}>
+                <IconButton
+                  onClick={toggleTheme}
+                  color="primary"
+                  sx={{
+                    border: 1,
+                    borderColor: 'primary.light',
+                    '&:hover': {
+                      backgroundColor: 'primary.main',
+                      color: 'primary.contrastText',
+                      borderColor: 'primary.main'
+                    }
+                  }}
+                >
+                  {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
+                </IconButton>
+              </Tooltip>
               {user && (
                 <Box 
                   component={Link}
@@ -292,7 +328,10 @@ function Navbar() {
                     }
                   }}
                 >
-                  <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
+                  <Avatar 
+                    sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}
+                    src={user.avatar ? `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}${user.avatar}` : null}
+                  >
                     {user.username?.charAt(0).toUpperCase()}
                   </Avatar>
                   <Typography variant="body2" color="text.primary">
@@ -343,25 +382,67 @@ function Navbar() {
             </Box>
           )}
 
+          {/* Desktop Theme Toggle for Non-Authenticated Users */}
+          {!isMobile && !isAuthenticated && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Tooltip title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}>
+                <IconButton
+                  onClick={toggleTheme}
+                  color="primary"
+                  sx={{
+                    border: 1,
+                    borderColor: 'primary.light',
+                    '&:hover': {
+                      backgroundColor: 'primary.main',
+                      color: 'primary.contrastText',
+                      borderColor: 'primary.main'
+                    }
+                  }}
+                >
+                  {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
+                </IconButton>
+              </Tooltip>
+            </Box>
+          )}
+
           {/* Mobile Menu Button */}
           {isMobile && (
-            <IconButton
-              color="primary"
-              aria-label="open drawer"
-              edge="end"
-              onClick={handleDrawerToggle}
-              sx={{
-                border: 1,
-                borderColor: 'primary.light',
-                '&:hover': {
-                  backgroundColor: 'primary.main',
-                  color: 'primary.contrastText',
-                  borderColor: 'primary.main'
-                }
-              }}
-            >
-              <MenuIcon />
-            </IconButton>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Tooltip title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}>
+                <IconButton
+                  onClick={toggleTheme}
+                  color="primary"
+                  sx={{
+                    border: 1,
+                    borderColor: 'primary.light',
+                    '&:hover': {
+                      backgroundColor: 'primary.main',
+                      color: 'primary.contrastText',
+                      borderColor: 'primary.main'
+                    }
+                  }}
+                >
+                  {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
+                </IconButton>
+              </Tooltip>
+              <IconButton
+                color="primary"
+                aria-label="open drawer"
+                edge="end"
+                onClick={handleDrawerToggle}
+                sx={{
+                  border: 1,
+                  borderColor: 'primary.light',
+                  '&:hover': {
+                    backgroundColor: 'primary.main',
+                    color: 'primary.contrastText',
+                    borderColor: 'primary.main'
+                  }
+                }}
+              >
+                <MenuIcon />
+              </IconButton>
+            </Box>
           )}
         </Toolbar>
       </AppBar>

@@ -1,6 +1,5 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Link, Navigate } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import {
     Container,
@@ -17,6 +16,7 @@ import {
     Event
 } from '@mui/icons-material';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { CustomThemeProvider } from './contexts/ThemeContext';
 import Navbar from './components/Navbar';
 import Signup from './components/auth/Signup';
 import Login from './components/auth/Login';
@@ -40,132 +40,7 @@ import AdminDashboard from './components/admin/AdminDashboard';
 import AdminRoute from './components/routes/AdminRoute';
 import './App.css';
 
-// Create golf-themed theme following frontend rules
-const theme = createTheme({
-    palette: {
-        mode: 'light',
-        primary: {
-            main: '#2E7D32', // Golf green
-            light: '#4CAF50',
-            dark: '#1B5E20',
-            contrastText: '#FFFFFF',
-        },
-        secondary: {
-            main: '#FF6F00', // Orange accent
-            light: '#FF8F00',
-            dark: '#E65100',
-            contrastText: '#FFFFFF',
-        },
-        success: {
-            main: '#388E3C', // Darker green
-            light: '#66BB6A',
-            dark: '#2E7D32',
-        },
-        background: {
-            default: '#F8F9FA', // Light earth tone
-            paper: '#FFFFFF',
-        },
-        text: {
-            primary: '#2C3E50', // Dark earth tone
-            secondary: '#5D6D7E',
-        },
-    },
-    typography: {
-        fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-        h1: {
-            fontWeight: 700,
-            letterSpacing: '-0.02em',
-        },
-        h2: {
-            fontWeight: 700,
-            letterSpacing: '-0.01em',
-        },
-        h3: {
-            fontWeight: 600,
-        },
-        h4: {
-            fontWeight: 600,
-        },
-        h5: {
-            fontWeight: 600,
-        },
-        h6: {
-            fontWeight: 600,
-        },
-        button: {
-            fontWeight: 600,
-            textTransform: 'none',
-        },
-        body1: {
-            lineHeight: 1.6,
-        },
-        body2: {
-            lineHeight: 1.5,
-        },
-    },
-    shape: {
-        borderRadius: 8,
-    },
-    components: {
-        MuiButton: {
-            styleOverrides: {
-                root: {
-                    textTransform: 'none',
-                    borderRadius: 8,
-                    fontWeight: 600,
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                        transform: 'translateY(-2px)',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    },
-                },
-                contained: {
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                },
-            },
-        },
-        MuiPaper: {
-            styleOverrides: {
-                root: {
-                    borderRadius: 8,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                },
-                elevation1: {
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-                },
-                elevation2: {
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-                },
-                elevation3: {
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                },
-            },
-        },
-        MuiCard: {
-            styleOverrides: {
-                root: {
-                    borderRadius: 12,
-                    transition: 'all 0.3s ease',
-                },
-            },
-        },
-        MuiAppBar: {
-            styleOverrides: {
-                root: {
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                },
-            },
-        },
-        MuiChip: {
-            styleOverrides: {
-                root: {
-                    borderRadius: 6,
-                    fontWeight: 500,
-                },
-            },
-        },
-    },
-});
+
 
 // Protected Route component
 const ProtectedRoute = ({ children, adminOnly = false }) => {
@@ -424,7 +299,7 @@ const HomeRedirect = () => {
 function App() {
 
     return (
-        <ThemeProvider theme={theme}>
+        <CustomThemeProvider>
             <CssBaseline />
             <AuthProvider>
                 <Router>
@@ -495,7 +370,7 @@ function App() {
                     </Box>
                 </Router>
             </AuthProvider>
-        </ThemeProvider>
+        </CustomThemeProvider>
     );
 }
 

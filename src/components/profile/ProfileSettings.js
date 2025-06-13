@@ -64,6 +64,8 @@ function ProfileSettings() {
   // Update form data when user data changes
   useEffect(() => {
     if (user) {
+      console.log('User data updated:', user); // Debug log
+      console.log('Avatar URL:', user.avatar); // Debug log
       setProfileData({
         bio: user.bio || '',
         username: user.username || '',
@@ -140,6 +142,10 @@ function ProfileSettings() {
       setSuccess('Avatar updated successfully!');
       setFile(null);
       setPreviewUrl(null);
+      // Force a small delay to ensure the user state is updated
+      setTimeout(() => {
+        // This will trigger a re-render with the updated avatar
+      }, 100);
     } catch (err) {
       setError('Failed to upload avatar. Please try again.');
     } finally {
@@ -259,7 +265,11 @@ function ProfileSettings() {
             
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 3 }}>
               <Avatar
-                src={previewUrl || user?.avatar}
+                src={(() => {
+                  const avatarUrl = previewUrl || (user?.avatar ? `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}${user.avatar}` : null);
+                  console.log('Avatar URL being used:', avatarUrl); // Debug log
+                  return avatarUrl;
+                })()}
                 sx={{ 
                   width: 100, 
                   height: 100,

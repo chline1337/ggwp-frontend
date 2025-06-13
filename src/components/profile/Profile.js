@@ -56,7 +56,77 @@ function Profile() {
   const currentUser = user || authUser;
   
   // Ensure teams is always an array, even if the API call fails
-  const safeTeams = teams || [];
+  const allTeams = teams || [];
+  
+  // Filter teams to show only those where the current user is a member or captain
+  const userTeams = allTeams.filter(team => {
+    if (!currentUser) {
+      console.log('No current user for filtering');
+      return false;
+    }
+    
+    // Debug logging
+    console.log('Filtering team:', team.name);
+    console.log('Current user._id:', currentUser._id);
+    console.log('Current user.id:', currentUser.id);
+    console.log('Team captain:', team.captain);
+    console.log('Team members:', team.members);
+    
+    // Check if user is the captain - only if captain field exists and is not undefined
+    const userIdToCheck = currentUser._id || currentUser.id;
+    const captainId = team.captain;
+    
+    // Convert both IDs to strings for comparison (handle ObjectID vs string)
+    const userIdStr = String(userIdToCheck);
+    const captainIdStr = String(captainId);
+    
+    console.log('Captain comparison:');
+    console.log('  - User ID (raw):', userIdToCheck, typeof userIdToCheck);
+    console.log('  - Captain ID (raw):', captainId, typeof captainId);
+    console.log('  - User ID (string):', userIdStr);
+    console.log('  - Captain ID (string):', captainIdStr);
+    
+    const isCaptain = captainId && captainIdStr === userIdStr;
+    console.log('  - Is Captain:', isCaptain);
+    
+    if (isCaptain) {
+      console.log('User is captain of:', team.name);
+      return true;
+    }
+    
+    // Check if user is in the members array
+    if (team.members && Array.isArray(team.members)) {
+      console.log('Checking members for team:', team.name);
+      const isMember = team.members.some(member => {
+        console.log('Checking member:', member);
+        // Handle both string IDs and member objects
+        const memberId = typeof member === 'string' ? member : (member.user_id || member._id || member.id);
+        
+        // Convert both to strings for comparison (handle ObjectID vs string)
+        const memberIdStr = String(memberId);
+        const userIdStrForMember = String(userIdToCheck);
+        
+        console.log('Member comparison:');
+        console.log('  - Member ID (raw):', memberId, typeof memberId);
+        console.log('  - Member ID (string):', memberIdStr);
+        console.log('  - User ID (string):', userIdStrForMember);
+        
+        const isMatch = memberIdStr === userIdStrForMember;
+        console.log('  - Is Match:', isMatch);
+        
+        if (isMatch) {
+          console.log('User is member of:', team.name);
+        }
+        return isMatch;
+      });
+      if (isMember) return true;
+    }
+    
+    console.log('User is NOT part of:', team.name);
+    return false;
+  });
+
+  console.log('Filtered user teams:', userTeams.length, 'out of', allTeams.length, 'total teams');
 
   const [profileStats, setProfileStats] = useState({
     teamsJoined: 0,
@@ -76,13 +146,13 @@ function Profile() {
   useEffect(() => {
     if (currentUser) {
       setProfileStats({
-        teamsJoined: safeTeams.length || 0,
+        teamsJoined: userTeams.length || 0,
         gamesLinked: currentUser.game_accounts?.length || 0,
         accountAge: currentUser.created_at ? 
           Math.floor((new Date() - new Date(currentUser.created_at)) / (1000 * 60 * 60 * 24)) : 0
       });
     }
-  }, [currentUser, safeTeams]);
+  }, [currentUser, allTeams]); // Use allTeams instead of userTeams to avoid dependency issues
 
   const handleGameAccountChange = (e) => {
     setNewGameAccount({
@@ -210,7 +280,7 @@ function Profile() {
               fontSize: '2.5rem',
               fontWeight: 700
             }}
-            src={currentUser.avatar}
+            src={currentUser.avatar ? `${process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000'}${currentUser.avatar}` : null}
           >
             {currentUser.username?.charAt(0).toUpperCase()}
           </Avatar>
@@ -380,15 +450,29 @@ function Profile() {
                 </Button>
               </Box>
               
-              {safeTeams && safeTeams.length > 0 ? (
+              {userTeams && userTeams.length > 0 ? (
                 <List>
-                  {safeTeams.map((team, index) => (
-                    <ListItem key={team._id || index} divider={index < safeTeams.length - 1}>
+                  {userTeams.map((team, index) => (
+                    <ListItem key={team._id || index} divider={index < userTeams.length - 1}>
                       <ListItemIcon>
                         <TeamIcon color="primary" />
                       </ListItemIcon>
                       <ListItemText
-                        primary={team.name}
+                        primary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                              {team.name}
+                            </Typography>
+                            {(team.captain === currentUser._id || team.captain === currentUser.id) && (
+                              <Chip 
+                                label="Captain" 
+                                size="small" 
+                                color="primary" 
+                                variant="outlined"
+                              />
+                            )}
+                          </Box>
+                        }
                         secondary={`${team.members?.length || 0} members`}
                       />
                       <ListItemSecondaryAction>

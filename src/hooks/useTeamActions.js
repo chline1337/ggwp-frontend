@@ -50,15 +50,48 @@ const useTeamActions = () => {
 
     const createTeam = useCallback(async (formData) => {
         const token = localStorage.getItem('access_token');
+        if (!token) {
+            console.error('No access token found');
+            navigate('/login');
+            throw new Error('Authentication required');
+        }
+        
         try {
-            await axios.post(`${process.env.REACT_APP_API_URL}/api/teams/`, formData, {
-                headers: { Authorization: `Bearer ${token}` },
+            console.log('Creating team with data:', formData);
+            console.log('Using API URL:', `${process.env.REACT_APP_API_URL}/api/teams/`);
+            
+            const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/teams/`, formData, {
+                headers: { 
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
             });
-            console.log('Team created successfully');
+            
+            console.log('Team created successfully:', response.data);
             navigate('/teams');
+            return response.data;
         } catch (err) {
-            console.error('Failed to create team:', err.response?.data?.detail || err.message);
-            throw err; // Re-throw so calling component can handle it
+            console.error('Failed to create team - Full error:', err);
+            console.error('Error response:', err.response?.data);
+            console.error('Error status:', err.response?.status);
+            console.error('Error headers:', err.response?.headers);
+            
+            // More specific error messages
+            if (err.response?.status === 401) {
+                console.error('Authentication failed - redirecting to login');
+                localStorage.removeItem('access_token');
+                navigate('/login');
+                throw new Error('Authentication expired. Please log in again.');
+            } else if (err.response?.status === 403) {
+                throw new Error('You do not have permission to create teams.');
+            } else if (err.response?.status === 422) {
+                throw new Error('Invalid team data: ' + (err.response?.data?.detail || 'Please check your input'));
+            } else if (!err.response) {
+                throw new Error('Network error: Unable to connect to server. Please check if the backend is running.');
+            }
+            
+            const errorMessage = err.response?.data?.detail || err.message || 'Unknown error occurred';
+            throw new Error(errorMessage);
         }
     }, [navigate]);
 

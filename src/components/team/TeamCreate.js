@@ -72,10 +72,11 @@ function TeamCreate() {
     
     setLoading(true);
     try {
-      await createTeam({
+      const result = await createTeam({
         name: formData.name.trim(),
         description: formData.description.trim()
       });
+      console.log('Team creation result:', result);
       setSnackbar({ 
         open: true, 
         message: 'Team created successfully!', 
@@ -83,9 +84,11 @@ function TeamCreate() {
       });
       // Navigation will be handled by the hook
     } catch (error) {
+      console.error('Team creation error in component:', error);
+      const errorMessage = error.message || 'Failed to create team. Please try again.';
       setSnackbar({ 
         open: true, 
-        message: 'Failed to create team. Please try again.', 
+        message: errorMessage, 
         severity: 'error' 
       });
     } finally {

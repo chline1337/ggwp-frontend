@@ -38,7 +38,9 @@ import {
   PersonAdd as AssignIcon,
   DragIndicator as DragIcon,
   Check as CheckIcon,
-  Clear as ClearIcon
+  Clear as ClearIcon,
+  Visibility as ShowIcon,
+  VisibilityOff as HideIcon
 } from '@mui/icons-material';
 import { eventsService } from '../../services/events';
 
@@ -56,6 +58,7 @@ const SeatMap = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [hiddenSeats, setHiddenSeats] = useState(new Set());
 
   // Helper function to get correct event ID
   const getEventId = () => {
@@ -68,6 +71,14 @@ const SeatMap = ({
       loadParticipants();
     }
   }, [assignDialog, isOrganizer]);
+
+  // Load hidden seats from event data on mount
+  useEffect(() => {
+    if (event?.seatplan?.hidden_seats) {
+      const hiddenSeatsSet = new Set(event.seatplan.hidden_seats);
+      setHiddenSeats(hiddenSeatsSet);
+    }
+  }, [event]);
 
   const loadParticipants = async () => {
     try {
@@ -114,20 +125,54 @@ const SeatMap = ({
     return occupant && occupant.userId === currentUser?.id;
   };
 
-  // Handle seat click
-  const handleSeatClick = (row, column) => {
-    if (editMode && isOrganizer) {
-      // In edit mode, open assignment dialog
-      setSelectedSeat({ row, column });
-      setAssignDialog(true);
+  // Check if seat is hidden
+  const isSeatHidden = (row, column) => {
+    return hiddenSeats.has(`${row}-${column}`);
+  };
+
+  // Toggle seat visibility
+  const toggleSeatVisibility = (row, column) => {
+    const seatKey = `${row}-${column}`;
+    const newHiddenSeats = new Set(hiddenSeats);
+    
+    if (newHiddenSeats.has(seatKey)) {
+      newHiddenSeats.delete(seatKey);
     } else {
-      // Normal mode, current user seat assignment
-      if (isSeatOccupied(row, column)) {
-        if (isCurrentUserSeat(row, column)) {
-          handleRemoveSeat();
+      newHiddenSeats.add(seatKey);
+    }
+    
+    setHiddenSeats(newHiddenSeats);
+  };
+
+  // Handle seat click
+  const handleSeatClick = (row, column, event) => {
+    // Prevent click if seat is hidden and not in edit mode
+    if (isSeatHidden(row, column) && !editMode) {
+      return;
+    }
+
+    if (editMode && isOrganizer) {
+      // Check if Shift key is held for hide/show toggle
+      if (event?.shiftKey) {
+        toggleSeatVisibility(row, column);
+        return;
+      }
+      
+      // In edit mode, open assignment dialog (only for visible seats)
+      if (!isSeatHidden(row, column)) {
+        setSelectedSeat({ row, column });
+        setAssignDialog(true);
+      }
+    } else {
+      // Normal mode, current user seat assignment (only for visible seats)
+      if (!isSeatHidden(row, column)) {
+        if (isSeatOccupied(row, column)) {
+          if (isCurrentUserSeat(row, column)) {
+            handleRemoveSeat();
+          }
+        } else {
+          handleAssignSeat(row, column);
         }
-      } else {
-        handleAssignSeat(row, column);
       }
     }
   };
@@ -233,19 +278,65 @@ const SeatMap = ({
     return participants.filter(p => !seatedUserIds.includes(p.user_id));
   };
 
+  // Save hidden seats to backend
+  const saveHiddenSeats = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const hiddenSeatsArray = Array.from(hiddenSeats);
+      const result = await eventsService.updateSeatplanHiddenSeats(getEventId(), hiddenSeatsArray);
+      
+      if (result.success) {
+        setSuccess('Seatmap changes saved successfully!');
+        // Update the event object to reflect the saved hidden seats
+        if (event.seatplan) {
+          event.seatplan.hidden_seats = hiddenSeatsArray;
+        }
+      } else {
+        setError(result.error || 'Failed to save seatmap changes');
+      }
+    } catch (error) {
+      setError('Failed to save seatmap changes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Render seat component
   const renderSeat = (row, column) => {
     const occupant = getSeatOccupant(row, column);
     const isOccupied = occupant !== null;
     const isCurrentUsersSeat = occupant?.userId === currentUser?.id;
+    const isHidden = isSeatHidden(row, column);
+    
+    // If seat is hidden and not in edit mode, don't render anything
+    if (isHidden && !editMode) {
+      return (
+        <Box
+          key={`${row}-${column}`}
+          sx={{
+            width: 60,
+            height: 60,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        />
+      );
+    }
     
     return (
       <Tooltip
         key={`${row}-${column}`}
         title={
-          isOccupied 
-            ? `${occupant.username} (${occupant.email})`
-            : `Row ${row + 1}, Seat ${column + 1}`
+          isHidden 
+            ? `Hidden Seat - Row ${row + 1}, Seat ${column + 1} (Shift+Click to show)`
+            : isOccupied 
+              ? `${occupant.username} (${occupant.email})`
+              : editMode 
+                ? `Row ${row + 1}, Seat ${column + 1} (Shift+Click to hide)`
+                : `Row ${row + 1}, Seat ${column + 1}`
         }
       >
         <Card
@@ -256,30 +347,41 @@ const SeatMap = ({
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
-            backgroundColor: isCurrentUsersSeat 
-              ? 'primary.light' 
-              : isOccupied 
-                ? 'grey.300' 
-                : 'background.paper',
-            border: isCurrentUsersSeat ? 2 : 1,
-            borderColor: isCurrentUsersSeat 
-              ? 'primary.main' 
-              : isOccupied 
-                ? 'grey.400' 
-                : 'divider',
-            '&:hover': {
-              backgroundColor: isCurrentUsersSeat 
+            backgroundColor: isHidden 
+              ? 'action.disabledBackground'
+              : isCurrentUsersSeat 
                 ? 'primary.light' 
                 : isOccupied 
+                  ? 'grey.300' 
+                  : 'background.paper',
+            border: isCurrentUsersSeat ? 2 : 1,
+            borderColor: isHidden 
+              ? 'action.disabled'
+              : isCurrentUsersSeat 
+                ? 'primary.main' 
+                : isOccupied 
                   ? 'grey.400' 
-                  : 'action.hover',
-              borderColor: 'primary.main'
+                  : 'divider',
+            borderStyle: isHidden ? 'dashed' : 'solid',
+            opacity: isHidden ? 0.5 : 1,
+            '&:hover': {
+              backgroundColor: isHidden 
+                ? 'action.disabledBackground'
+                : isCurrentUsersSeat 
+                  ? 'primary.light' 
+                  : isOccupied 
+                    ? 'grey.400' 
+                    : 'action.hover',
+              borderColor: editMode ? 'primary.main' : (isCurrentUsersSeat ? 'primary.main' : 'primary.light'),
+              opacity: isHidden ? 0.7 : 1
             },
             position: 'relative'
           }}
-          onClick={() => handleSeatClick(row, column)}
+          onClick={(e) => handleSeatClick(row, column, e)}
         >
-          {isOccupied ? (
+          {isHidden ? (
+            <HideIcon color="disabled" fontSize="small" />
+          ) : isOccupied ? (
             <Box sx={{ textAlign: 'center' }}>
               <PersonIcon 
                 color={isCurrentUsersSeat ? 'primary' : 'disabled'} 
@@ -337,23 +439,44 @@ const SeatMap = ({
         </Typography>
         
         {isOrganizer && (
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             {editMode ? (
               <>
                 <Button
                   variant="contained"
                   startIcon={<SaveIcon />}
-                  onClick={() => setEditMode(false)}
+                  onClick={async () => {
+                    await saveHiddenSeats();
+                    setEditMode(false);
+                  }}
                   color="primary"
+                  disabled={loading}
                 >
                   Save Changes
                 </Button>
                 <Button
                   variant="outlined"
                   startIcon={<CancelIcon />}
-                  onClick={() => setEditMode(false)}
+                  onClick={() => {
+                    // Reset hidden seats to original state when canceling
+                    if (event?.seatplan?.hidden_seats) {
+                      setHiddenSeats(new Set(event.seatplan.hidden_seats));
+                    } else {
+                      setHiddenSeats(new Set());
+                    }
+                    setEditMode(false);
+                  }}
                 >
                   Cancel
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<ShowIcon />}
+                  onClick={() => setHiddenSeats(new Set())}
+                  disabled={hiddenSeats.size === 0}
+                  size="small"
+                >
+                  Show All Seats
                 </Button>
               </>
             ) : (
@@ -373,7 +496,13 @@ const SeatMap = ({
       {editMode && (
         <Alert severity="info" sx={{ mb: 3 }}>
           <strong>Edit Mode Active:</strong> Click on seats to assign participants. 
-          Use the X button to remove assignments. Drag seats to reposition them.
+          <strong>Shift+Click</strong> to hide/show seats. 
+          Use the X button to remove assignments.
+          {hiddenSeats.size > 0 && (
+            <Box component="span" sx={{ ml: 2, fontWeight: 'bold', color: 'warning.main' }}>
+              ({hiddenSeats.size} seat{hiddenSeats.size !== 1 ? 's' : ''} hidden)
+            </Box>
+          )}
         </Alert>
       )}
 
@@ -423,6 +552,15 @@ const SeatMap = ({
           color="primary"
           size="small"
         />
+        {editMode && (
+          <Chip
+            icon={<HideIcon />}
+            label="Hidden Seat"
+            color="secondary"
+            variant="outlined"
+            size="small"
+          />
+        )}
       </Box>
 
       {/* Seat Assignment Dialog */}

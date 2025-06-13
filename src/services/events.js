@@ -350,5 +350,31 @@ export const eventsService = {
         error: errorMessage
       };
     }
+  },
+
+  // Update seatplan hidden seats (organizer only)
+  updateSeatplanHiddenSeats: async (eventId, hiddenSeats) => {
+    try {
+      const response = await api.put(`/api/events/${eventId}/seatplan/hidden-seats`, {
+        hidden_seats: hiddenSeats
+      });
+      return {
+        success: true,
+        data: response.data,
+        message: 'Seatplan hidden seats updated successfully'
+      };
+    } catch (error) {
+      console.error('Update seatplan hidden seats error:', error);
+      let errorMessage = 'Failed to update seatplan hidden seats';
+      if (error.response?.data?.detail) {
+        errorMessage = typeof error.response.data.detail === 'string' 
+          ? error.response.data.detail 
+          : 'Failed to update seatplan hidden seats';
+      }
+      return {
+        success: false,
+        error: errorMessage
+      };
+    }
   }
 }; 
