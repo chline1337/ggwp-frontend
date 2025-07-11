@@ -38,6 +38,7 @@ import EventEdit from './components/event/EventEdit';
 import Dashboard from './components/Dashboard';
 import AdminDashboard from './components/admin/AdminDashboard';
 import AdminRoute from './components/routes/AdminRoute';
+import Trackmania from './pages/Trackmania';
 import './App.css';
 
 
@@ -363,6 +364,14 @@ function App() {
                                         <AdminRoute>
                                             <AdminDashboard />
                                         </AdminRoute>
+                                    }
+                                />
+                                <Route
+                                    path="/trackmania"
+                                    element={
+                                        <ProtectedRoute>
+                                            <Trackmania />
+                                        </ProtectedRoute>
                                     }
                                 />
                             </Routes>

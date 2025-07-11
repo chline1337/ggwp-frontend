@@ -35,7 +35,8 @@ import {
   Home as HomeIcon,
   Settings as SettingsIcon,
   LightMode as LightModeIcon,
-  DarkMode as DarkModeIcon
+  DarkMode as DarkModeIcon,
+  Speed as TrackmaniaIcon
 } from '@mui/icons-material';
 
 function Navbar() {
@@ -72,6 +73,7 @@ function Navbar() {
       { label: 'Tournaments', path: '/tournaments', icon: <TournamentIcon /> },
       { label: 'Events', path: '/events', icon: <EventIcon /> },
       { label: 'Teams', path: '/teams', icon: <TeamIcon /> },
+      { label: 'Trackmania', path: '/trackmania', icon: <TrackmaniaIcon /> },
       { label: 'Profile', path: '/profile', icon: <ProfileIcon /> },
       { label: 'Create Event', path: '/create-event', icon: <CreateIcon /> }
     ] : [])
